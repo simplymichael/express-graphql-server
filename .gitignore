@@ -1,0 +1,20 @@
+# Coverage directory
+/coverage
+.nyc_output
+
+# Dependency directory
+node_modules
+
+# production
+/build
+
+# security
+/ssl/*
+!/ssl/development
+
+# misc
+.env
+.data
+.DS_Store
+.log
+*.db
