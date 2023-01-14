@@ -5,7 +5,9 @@
   "main": "src/index.js",
   "scripts": {
     "commit": "git-cz",
-    "test": "mocha __tests__/server.spec.js",
+    "test": "mocha __tests__/server.spec.js", 
+    "test:watch": "npm test -- -w",
+    "test:coverage": "nyc npm test",
     "lint": "./node_modules/.bin/eslint src __tests__",
     "lint:fix": "npm run lint -- --fix"
   },
@@ -27,7 +29,7 @@
   "bugs": {
     "url": "https://github.com/simplymichael/express-graphql-server/issues"
   },
-  "homepage": "https://github.com/simplymichael/express-graphql-server#readme", 
+  "homepage": "https://github.com/simplymichael/express-graphql-server#readme",
   "dependencies": {
     "@graphql-tools/schema": "9.0.13",
     "apollo-server": "3.11.1",
@@ -45,7 +47,8 @@
     "cz-conventional-changelog": "3.3.0",
     "eslint": "8.31.0",
     "ghooks": "2.0.4",
-    "mocha": "10.2.0"
+    "mocha": "10.2.0",
+    "nyc": "15.1.0"
   },
   "config": {
     "commitizen": {
