@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "A GraphQL server based on Apollo Server and Express.js",
   "main": "src/index.js",
-  "scripts": {
+  "scripts": { 
+    "commit": "git-cz",
     "test": "mocha __tests__/server.spec.js"
   },
   "repository": {
@@ -27,6 +28,13 @@
   "homepage": "https://github.com/simplymichael/express-graphql-server#readme",
   "devDependencies": {
     "chai": "4.3.7",
+    "commitizen": "4.2.6",
+    "cz-conventional-changelog": "3.3.0",
     "mocha": "10.2.0"
+  }, 
+  "config": {
+    "commitizen": {
+      "path": "node_modules/cz-conventional-changelog"
+    }
   }
 }
