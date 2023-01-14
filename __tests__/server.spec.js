@@ -2,14 +2,26 @@
 /*eslint-env node, mocha */
 
 const chai = require("chai");
+const { schema, resolvers } = require("./schema");
 const { createServer } = require("../src");
 
 const { expect, should } = chai;
 
 should();
 
-const defaultServerConfig = {};
-
+const defaultServerConfig = {
+  host                  : "localhost", 
+  port                  : 3001, 
+  redisHost             : "localhost",
+  redisPort             : 6379,
+  allowedOrigins        : ["http://127.0.0.1", "http://localhost", "https://localhost"], 
+  https                 : false, 
+  sslPrivateKey         : "",
+  sslPublicCert         : "",
+  sslVerifyCertificates : false,
+  sessionSecret         : "",
+  sessionExpiry         : 0, 
+};
 
 after(function(done) {
   setTimeout(() => process.exit(0), 100);
@@ -19,7 +31,7 @@ after(function(done) {
 
 describe("createServer", function() {
   it("should create the server with default config options if none passed", async function() {
-    let server = await createServer({}); 
+    let server = await createServer({ schema, resolvers, context }); 
 
     expect(server).to.have.property("middleware").to.be.a("function");
     expect(server).to.have.property("start").to.be.a("function");
@@ -32,11 +44,12 @@ describe("createServer", function() {
 
   it("should override default config options with supplied options", async function() { 
     const serverConfig = { 
-      host: "localhost",
+      ...defaultServerConfig, 
       port: 80, 
+      redisPort: 81
     };
 
-    let server = await createServer({ serverConfig });
+    let server = await createServer({ serverConfig, schema, resolvers, context });
 
     expect(server).to.have.property("middleware").to.be.a("function");
     expect(server).to.have.property("start").to.be.a("function");
