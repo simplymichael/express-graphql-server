@@ -3,9 +3,11 @@
   "version": "1.0.0",
   "description": "A GraphQL server based on Apollo Server and Express.js",
   "main": "src/index.js",
-  "scripts": { 
+  "scripts": {
     "commit": "git-cz",
-    "test": "mocha __tests__/server.spec.js"
+    "test": "mocha __tests__/server.spec.js", 
+    "lint": "./node_modules/.bin/eslint src __tests__",
+    "lint:fix": "npm run lint -- --fix"
   },
   "repository": {
     "type": "git",
@@ -30,8 +32,9 @@
     "chai": "4.3.7",
     "commitizen": "4.2.6",
     "cz-conventional-changelog": "3.3.0",
+    "eslint": "8.31.0",
     "mocha": "10.2.0"
-  }, 
+  },
   "config": {
     "commitizen": {
       "path": "node_modules/cz-conventional-changelog"
