@@ -7,11 +7,19 @@ A GraphQL server based on Apollo Server and Express.js
 
 
 ## Tech stack 
-Node.js v14.15.5
-NPM 6.14.11
+- Node.js v14.15.5
+- NPM 6.14.11
 
 ## Installation
 `npm install express-graphql-server`
+
+## Features 
+- Unopinionated 
+- Simple and clear configuration options
+- Quick and easy to setup
+- Support for middleware 
+- Allows specifying (via middlewares) custom (Express) routes, different from the GraphQL endpoint (`/graphql`).
+- Allows passing and sharing of values to and by resolvers via a `context` object
 
 ## Before starting the server 
 - Make sure to have a Redis server running 
@@ -46,12 +54,12 @@ const serverConfig = {
   // for a logged-in user
   const REMEMBER_ME_DAYS = 30; // number of days to remember user for
 
-  server.middleware(function(app, sessionOptions) {
+  server.middleware(function({ session }) {
     return (req, res, next) => {
       if(req.body.query?.indexOf("mutation login") === 0) {
         if(req.body.variables?.rememberUser) {
-          sessionOptions.rolling = false;
-          sessionOptions.cookie.maxAge = (
+          session.rolling = false;
+          session.cookie.maxAge = (
             1000 * 60 * 60 * 24 * Number(REMEMBER_ME_DAYS)
           );
         }
@@ -74,10 +82,20 @@ const serverConfig = {
 - **`server.middleware(callback)`:** Register a request middleware. 
   The `callback` receives as argument an object with the following members: 
     - `app`: An instance of Express (`app = express()`).
-    - `server`: An instance of Apollo Server (`server = new ApolloServer()`)
+    - `server`: An instance of Apollo Server (`server = new ApolloServer()`).
     - `config`: An object representing the final values used in `configObject.serverConfig`.
-    - `redisClient`: An instance of the Redis client (`redis.createClient()`)
-    - `sessionOptions`: An object that allows us to configure options for the session.
+    - `redis`: An instance of the Redis client (`redis.createClient()`).
+    - `session`: An object that allows us to further configure the options passed to `express-session`.
+  The `callback` should return a middleware function, that is one with the following signature: 
+  ```js
+  function middlewareName(req, res, next) {
+    // Perform middleware actions here 
+
+    // make sure to call next() to pass on the request to the next middleware in the chain 
+    // and to avoid terminating the request
+    next();  
+  }
+  ```
 - **`server.start()`:** Starts the server running on the specified host and port.
   Returns an object with two members: `app` and `server`. 
     - `app`: An instance of Express (`const app = express()`).

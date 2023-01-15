@@ -58,5 +58,8 @@
     "ghooks": {
       "pre-commit": "npm run lint && npm run test:coverage"
     }
+  }, 
+  "engines": {
+    "node": ">=14.15.5"
   }
 }
