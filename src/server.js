@@ -64,11 +64,11 @@ module.exports = async function createServer({ serverConfig, schema, resolvers, 
   });
     
   redisClient.on("error", function (err) {
-    console.log(`Could not establish a connection with redis. ${err}`);
+    console.warn("Could not establish a connection to the Redis server: %o", err);
   });
     
   redisClient.on("connect", function () {
-    console.log("Connected to redis successfully");
+    console.log("Connection to Redis server successful!");
   });
     
   // Configure session middleware options
@@ -143,7 +143,7 @@ module.exports = async function createServer({ serverConfig, schema, resolvers, 
 
 
   function addMiddleware(cb) {
-    app.use( cb({ app, config, sessionOptions, redisClient }) );
+    app.use( cb({ app, config, server, sessionOptions, redisClient }) );
   }
 
   async function startServer() { 
