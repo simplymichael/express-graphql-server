@@ -6,7 +6,9 @@
       "src/**/*.js"
     ],
     "exclude": [
-      "**/*spec.js"
+      "**/*spec.js", 
+      "examples", 
+      "src/runserver.js"
     ],
     "reporter": [
       "json",
