@@ -116,7 +116,7 @@ module.exports = async function createServer({ serverConfig, schema, resolvers, 
     
   let httpServer;
   let certOptions;
-  const secure = parseInt(enableHttps) > 0;
+  const secure = (typeof enableHttps === "number" ? parseInt(enableHttps) > 0 : enableHttps);
   const host = appHost;
   const port = secure ? 443 : appPort;
     
@@ -143,7 +143,7 @@ module.exports = async function createServer({ serverConfig, schema, resolvers, 
 
 
   function addMiddleware(cb) {
-    app.use( cb({ app, config, server, sessionOptions, redisClient }) );
+    app.use( cb({ app, config, server, sessionOptions: session, redisClient: redis }) );
   }
 
   async function startServer() { 
