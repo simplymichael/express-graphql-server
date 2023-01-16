@@ -1,0 +1,23 @@
+{
+  "name": "user-management-system",
+  "version": "1.0.0",
+  "description": "",
+  "main": "",
+  "scripts": {
+    "start": "node src/index.js",
+    "prisma:studio": "cd src && npx prisma studio",
+    "prisma:generate": "cd src && npx prisma generate",
+    "prisma:migrate": "cd src && npx prisma migrate dev",
+    "prisma": "npm run prisma:migrate && npm run prisma:generate"
+  },
+  "keywords": [],
+  "author": "simplymichael <simplymichaelorji@gmail.com> (https://github.com/simplymichael)",
+  "license": "MIT",
+  "dependencies": {
+    "@prisma/client": "4.8.1",
+    "bcrypt": "5.1.0",
+    "dotenv": "16.0.3",
+    "email-validator": "2.0.4",
+    "prisma": "4.8.1"
+  }
+}

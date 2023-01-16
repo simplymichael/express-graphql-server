@@ -1,0 +1,40 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Because MongoDB is currently a preview feature,
+// you need to explicitly define that in the "generator" block.
+// Otherwise, when you run the prisma migrate command, you'll get error:
+// Error: "mongodb" provider is not supported with this command.
+// For more info see https://www.prisma.io/docs/concepts/database-connectors/mongodb
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// User model
+// Possible "roles":
+// - admin
+// - user
+//
+// Possible "statuses":
+// - active
+// - suspended
+// - deleted
+// 
+// NOTE: If using MongoDB, replace the `dbgenerated()` id function with auto()
+model User {
+  id          String   @id @default(dbgenerated()) @map("_id") @db.ObjectId
+  firstname   String
+  lastname    String
+  username    String   @unique
+  email       String   @unique
+  password    String
+  role        String   @default("user")
+  status      String   @default("active")
+  createdAt   DateTime @default(now())
+}

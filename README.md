@@ -54,7 +54,7 @@ const serverConfig = {
   // for a logged-in user
   const REMEMBER_ME_DAYS = 30; // number of days to remember user for
 
-  server.middleware(function({ session }) {
+  server.execute(function({ session }) {
     return (req, res, next) => {
       if(req.body.query?.indexOf("mutation login") === 0) {
         if(req.body.variables?.rememberUser) {
@@ -76,17 +76,20 @@ const serverConfig = {
 
 ## API 
 - **`createServer(configObject)`:** Creates and returns a server object. 
-  The returned object has two methods: `getConfig([key])`, `middleware(cb)`, and `start()`.  
+  The returned object has two methods: `getConfig([key])`, `execute(cb)`, and `start()`.  
 - **`server.getConfig([key])`: Get the configuration values. 
   If the optional `key` is passed, get only the configuraton value for that key.
-- **`server.middleware(callback)`:** Register a request middleware. 
+- **`server.execute(callback)`:** Allows us to execute arbitrary code
+  (for example, registering middlewares) prior to starting the server. 
   The `callback` receives as argument an object with the following members: 
     - `app`: An instance of Express (`app = express()`).
     - `server`: An instance of Apollo Server (`server = new ApolloServer()`).
     - `config`: An object representing the final values used in `configObject.serverConfig`.
     - `redis`: An instance of the Redis client (`redis.createClient()`).
     - `session`: An object that allows us to further configure the options passed to `express-session`.
-  The `callback` should return a middleware function, that is one with the following signature: 
+  If we are using this function for registering a middleware, 
+  the `callback` must call `app.use(middlewareFn)` passing it the middleware function as argument. 
+  The middleware function should have the following signature: 
   ```js
   function middlewareName(req, res, next) {
     // Perform middleware actions here 
@@ -135,13 +138,48 @@ const serverConfig = {
     - `sessionExpiry` [number]: Session expiry time (in minutes) (Default: `0`)
 - **`schema`**: [sting, required]: Your GraphQL schema 
 - **`resolvers`**: [object, required]: Your GraphQL resolvers 
-- **`context`**: [object, optional]: Allows you to pass in any values to the context object. 
-  The passed values will then be available to every resolver via the `context` argument in resolvers.
+- **`context`**: [function|object, optional]: Allows you to pass in any values to the context object. 
+  These values must be encoded using a key-value object.
+  The passed values will then be available to every resolver via the `context` argument available to all resolvers.
+  `context` can be either an object or a function. 
+  If it is a function, the function automatically receives a context object as an argument. 
+  The function must return a key-value object as specified above.  
 
 
 
 See the **<a href="examples/">examples</a>** directory.
 
+## Running the examples in the `examples/` directory 
+To run the examples, 
+- Ensure you have a database instance running. 
+- Navigate to the `examples/<TARGET_EXAMPLE>` directory, e.g: 
+  `cd examples/user-management-system`.
+- Copy the `.env.example` file inside the directory 
+  to a `.env` file inside the same directory and edit the environment variable values as appropriate, 
+  making sure the `DATABASE_URL` value matches your database connection details.
+- Copy the `schema.prisma.example` file to `schema.prisma` and edit as appropriate. 
+- If you are using MongoDB, note the following: 
+    - prisma requires a MongoDB replica set. 
+      You can use the open source [mongo-db-replica-set][] for running the examples.
+    - Edit the `schema.prisma` file as follows:
+        - In the `datasource db` section, set the `provider` field value to `"mongodb"`. 
+        - For the `id` fields of the models, `auto()` in place of `dbgenerated()` 
+          which is not allowed with MongoDB.
+- If this is your first time of running the given example, do the following: 
+    - run `npm install` to install dependencies.
+    - If you are using MongoDb, run `npm run prisma:generate` to generate the prisma client, 
+      otherwise run `npm run prisma` to perform the database migration and generate the prisma client.
+- Run `npm start` to start the server lisening on `APP_HOST:APP_PORT`, 
+  where `APP_HOST` and `APP_PORT` are the values set inside the `.env` file.
+- Make requests to `APP_HOST:APP_PORT/graphql`.
+
+To view and edit the database data in the browser, run `npm run prisma:studio` 
+from within the target example directory, then open your browser to `localhost:5555`.
+
 ## Running tests
 - Run `npm test` to run tests
 - Run `npm run test:coverate` to run tests with code coverage reporting
+
+
+
+[mongo-db-replica-set]: https://github.com/simplymichael/mongo-db-replica-set
