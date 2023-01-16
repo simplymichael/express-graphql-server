@@ -35,7 +35,7 @@ describe("createServer", function() {
   it("should create the server with default config options if none passed", async function() {
     let server = await createServer({ schema, resolvers, context: {} }); 
 
-    expect(server).to.have.property("middleware").to.be.a("function");
+    expect(server).to.have.property("execute").to.be.a("function");
     expect(server).to.have.property("start").to.be.a("function");
     expect(server).to.have.property("getConfig").to.be.a("function");
 
@@ -53,7 +53,7 @@ describe("createServer", function() {
 
     let server = await createServer({ serverConfig, schema, resolvers, context: null });
 
-    expect(server).to.have.property("middleware").to.be.a("function");
+    expect(server).to.have.property("execute").to.be.a("function");
     expect(server).to.have.property("start").to.be.a("function");
     expect(server).to.have.property("getConfig").to.be.a("function");
 

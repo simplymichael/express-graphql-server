@@ -136,14 +136,14 @@ module.exports = async function createServer({ serverConfig, schema, resolvers, 
   // End HTTPS setup 
 
   return { 
-    middleware: addMiddleware.bind(this),
+    execute: invoke.bind(this),
     start: startServer.bind(this),
     getConfig: (key) => (key ? config[key] : config),
   };
 
 
-  function addMiddleware(cb) {
-    app.use( cb({ app, config, server, sessionOptions: session, redisClient: redis }) );
+  function invoke(cb) {
+    return cb({ app, config, server, sessionOptions: session, redisClient: redis });
   }
 
   async function startServer() { 
