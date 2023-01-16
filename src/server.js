@@ -60,7 +60,8 @@ module.exports = async function createServer({ serverConfig, schema, resolvers, 
   });
   const redisClient = redis.createClient({
     host: redisHost,
-    port: redisPort
+    port: redisPort, 
+    legacyMode: true, 
   });
     
   redisClient.on("error", function (err) {
@@ -70,6 +71,8 @@ module.exports = async function createServer({ serverConfig, schema, resolvers, 
   redisClient.on("connect", function () {
     console.log("Connection to Redis server successful!");
   });
+
+  await redisClient.connect();
     
   // Configure session middleware options
   const sessionOptions = {
