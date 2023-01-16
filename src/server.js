@@ -116,7 +116,7 @@ module.exports = async function createServer({ serverConfig, schema, resolvers, 
     
   let httpServer;
   let certOptions;
-  const secure = (typeof enableHttps === "number" ? parseInt(enableHttps) > 0 : enableHttps);
+  const secure = enableHttps;
   const host = appHost;
   const port = secure ? 443 : appPort;
     
