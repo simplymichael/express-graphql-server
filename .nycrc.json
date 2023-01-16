@@ -1,14 +1,14 @@
 
   {
     "all": true,
-    "check-coverage": true,
+    "check-coverage": true, 
     "include": [
-      "src/**/*.js"
+      "src/**/*.js" 
     ],
-    "exclude": [
+    "exclude": [ 
       "**/*spec.js", 
-      "examples", 
-      "src/runserver.js"
+      "examples/**/*.js", 
+      "src/runserver.js" 
     ],
     "reporter": [
       "json",

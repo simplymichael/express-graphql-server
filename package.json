@@ -8,7 +8,7 @@
     "test": "mocha __tests__/server.spec.js",
     "test:watch": "npm test -- -w",
     "test:coverage": "nyc npm test",
-    "lint": "npx eslint src __tests__",
+    "lint": "npx eslint src examples __tests__",
     "lint:fix": "npm run lint -- --fix"
   },
   "repository": {
