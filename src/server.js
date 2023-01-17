@@ -13,7 +13,7 @@ const RedisStore = connectRedis(session);
 module.exports = async function createServer({ serverConfig, schema, resolvers, context }) { 
   let serverStarted = false;
 
-  if(typeof context !== "object" || context === null) {
+  if(typeof context !== "function" && (typeof context !== "object" || context === null)) {
     context = {};
   }
     
@@ -145,8 +145,10 @@ module.exports = async function createServer({ serverConfig, schema, resolvers, 
   };
 
 
-  function invoke(cb) {
-    return cb({ app, config, server, sessionOptions: session, redisClient: redis });
+  function invoke(cb) { 
+    const redis = redisClient;
+    const session = sessionOptions; 
+    return cb({ app, config, server, session, redis });
   }
 
   async function startServer() { 
