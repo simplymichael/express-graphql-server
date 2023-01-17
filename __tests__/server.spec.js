@@ -47,8 +47,8 @@ describe("createServer", function() {
   it("should override default config options with supplied options", async function() { 
     const serverConfig = { 
       ...defaultServerConfig, 
-      port: 80, 
-      redisPort: 81
+      port: 8084, 
+      redisPort: 8085
     };
 
     let server = await createServer({ serverConfig, schema, resolvers, context: null });
@@ -67,8 +67,8 @@ describe("createServer", function() {
 describe("Server", function() { 
   const serverConfig = { 
     ...defaultServerConfig, 
-    port: 80, 
-    redisPort: 81
+    port: 8084, 
+    redisPort: 8085
   }; 
 
   const serverUrl = `${serverConfig.host}:${serverConfig.port}`;

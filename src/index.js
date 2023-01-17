@@ -1,3 +1,5 @@
+"use strict";
+
 const createServer = require("./server");
 
 module.exports = {

@@ -1,3 +1,5 @@
+"use strict";
+
 const http = require("http");
 const https = require("https");
 const redis = require("redis");
@@ -7,6 +9,8 @@ const session = require("express-session");
 const connectRedis = require("connect-redis");
 const { ApolloServer } = require("apollo-server-express");
 const { makeExecutableSchema } = require("@graphql-tools/schema");
+
+const chromeSessionPersistenceFix = require("./chrome-session-persistence-fix");
 
 const RedisStore = connectRedis(session);
 
@@ -99,6 +103,7 @@ module.exports = async function createServer({ serverConfig, schema, resolvers, 
 
   app.use(express.json());
   app.use(session(sessionOptions));
+  app.use(chromeSessionPersistenceFix(sessionOptions));
     
   // CORS middleware
   app.use((req, res, next) => {
