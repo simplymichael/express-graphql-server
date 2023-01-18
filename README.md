@@ -23,9 +23,6 @@ npm install express-graphql-server
 - Allows specifying (via middlewares) custom (Express) routes, different from the GraphQL endpoint (`/graphql`).
 - Allows passing and sharing of values to and by resolvers via a `context` object
 
-## Before starting the server 
-- Make sure to have a Redis server running 
-
 ## API 
 - **`createServer(configObject)`:** Creates and returns a server object. 
   The returned object has several methods: `getConfig([key])`, `execute(cb)`, and `start()`.  
