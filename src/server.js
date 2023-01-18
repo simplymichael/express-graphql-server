@@ -2,19 +2,16 @@
 
 const http = require("http");
 const https = require("https");
-const redis = require("redis");
 const express = require("express");
 const { v4: uuidv4 } = require("uuid");
 const session = require("express-session");
-const connectRedis = require("connect-redis");
 const { ApolloServer } = require("apollo-server-express");
 const { makeExecutableSchema } = require("@graphql-tools/schema");
 
 const chromeSessionPersistenceFix = require("./chrome-session-persistence-fix");
 
-const RedisStore = connectRedis(session);
 
-module.exports = async function createServer({ serverConfig, schema, resolvers, context }) { 
+module.exports = async function createServer({ serverConfig, sessionConfig, schema, resolvers, context, onCreate }) { 
   let serverStarted = false;
 
   if(typeof context !== "function" && (typeof context !== "object" || context === null)) {
@@ -24,22 +21,32 @@ module.exports = async function createServer({ serverConfig, schema, resolvers, 
   const config = { 
     host                  : "localhost", 
     port                  : 3001, 
-    redisHost             : "localhost",
-    redisPort             : 6379,
     allowedOrigins        : ["http://127.0.0.1", "http://localhost", "https://localhost"], 
     https                 : false, 
     sslPrivateKey         : "",
     sslPublicCert         : "",
     sslVerifyCertificates : false,
-    sessionSecret         : "",
-    sessionExpiry         : 0, 
     ...serverConfig
   };
-  const { host: appHost, port: appPort, redisHost, redisPort, 
-    allowedOrigins, https: enableHttps, sslPrivateKey, sslPublicCert, 
-    sslVerifyCertificates, sessionSecret, sessionExpiry 
+  const { host: appHost, port: appPort, allowedOrigins, https: enableHttps, 
+    sslPrivateKey, sslPublicCert, sslVerifyCertificates 
   } = config;
-      
+
+  const sessConfig = {
+    name   : "connect.sid", 
+    store  : null,
+    secret : "",
+    expiry : 0, 
+    ...sessionConfig
+  };
+
+  const { 
+    name   : sessionName, 
+    store  : sessionStore,
+    secret : sessionSecret, 
+    expiry : sessionExpiry 
+  } = sessConfig;
+    
   const apolloCorsOptions = {
     credentials: true,
     origin: (origin, callback) => {
@@ -62,26 +69,11 @@ module.exports = async function createServer({ serverConfig, schema, resolvers, 
       req: ctx.req,
     }),
   });
-  const redisClient = redis.createClient({
-    host: redisHost,
-    port: redisPort, 
-    legacyMode: true, 
-  });
-    
-  redisClient.on("error", function (err) {
-    console.warn("Could not establish a connection to the Redis server: %o", err);
-  });
-    
-  redisClient.on("connect", function () {
-    console.log("Connection to Redis server successful!");
-  });
-
-  await redisClient.connect();
     
   // Configure session middleware options
-  const sessionOptions = {
+  const sessionOptions = { 
+    name: sessionName, 
     genid: () => uuidv4(), // generate a session ID.
-    store: new RedisStore({ client: redisClient }),
     secret: sessionSecret, // secret is needed to sign the cookie
     resave: false,
     saveUninitialized: false,
@@ -93,6 +85,10 @@ module.exports = async function createServer({ serverConfig, schema, resolvers, 
       maxAge: 1000 * 60 * Number(sessionExpiry) // session max age in miliseconds
     }
   };
+
+  if(typeof sessionStore === "function") {
+    sessionOptions.store = await sessionStore(session);
+  }
     
   if (app.get("env") === "production") {
     // enable this if you run behind a proxy (e.g. nginx)
@@ -102,6 +98,11 @@ module.exports = async function createServer({ serverConfig, schema, resolvers, 
   }
 
   app.use(express.json());
+  
+  if(typeof onCreate === "function") {
+    onCreate({app, serverConfig: config, sessionConfig: sessionOptions});
+  }
+
   app.use(session(sessionOptions));
   app.use(chromeSessionPersistenceFix(sessionOptions));
     
@@ -146,14 +147,12 @@ module.exports = async function createServer({ serverConfig, schema, resolvers, 
   return { 
     execute: invoke.bind(this),
     start: startServer.bind(this),
-    getConfig: (key) => (key ? config[key] : config),
+    getServerConfig : (key) => (key ? config[key] : config),
+    getSessionConfig: (key) => (key ? sessionOptions[key] : sessionOptions),
   };
 
-
   function invoke(cb) { 
-    const redis = redisClient;
-    const session = sessionOptions; 
-    return cb({ app, config, server, session, redis });
+    return cb({ app, server });
   }
 
   async function startServer() { 

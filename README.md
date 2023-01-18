@@ -11,7 +11,9 @@ A GraphQL server based on Apollo Server and Express.js
 - NPM 6.14.11
 
 ## Installation
-`npm install express-graphql-server`
+```sh
+npm install express-graphql-server
+```
 
 ## Features 
 - Unopinionated 
@@ -24,69 +26,17 @@ A GraphQL server based on Apollo Server and Express.js
 ## Before starting the server 
 - Make sure to have a Redis server running 
 
-## Quick example
-```js
-const { startServer } = require("express-graphql-server");
-const schema = require("path/to/your/schema");
-const resolvers = require("path/to/your/resolvers");
-
-const serverConfig = { 
-  host                  : "localhost", 
-  port                  : 3001, 
-  redisHost             : "localhost",
-  redisPort             : 6379,
-  allowedOrigins        : ["http://localhost",  "https://studio.apollographql.com"], 
-  https                 : false, 
-  sslPrivateKey         : "",
-  sslPublicCert         : "",
-  sslVerifyCertificates : false,
-  sessionSecret         : "some secret string",
-  sessionExpiry         : 0, 
-};
-
-(async function runServer() { 
-  // Create the server
-  const server = await createServer({ serverConfig, schema, resolvers, context: null });
-
-
-  // Use `server.middleware()` to add request middleware. 
-  // For example, use a middleware to implement a "remember user" feature 
-  // for a logged-in user
-  const REMEMBER_ME_DAYS = 30; // number of days to remember user for
-
-  server.execute(function({ session }) {
-    return (req, res, next) => {
-      if(req.body.query?.indexOf("mutation login") === 0) {
-        if(req.body.variables?.rememberUser) {
-          session.rolling = false;
-          session.cookie.maxAge = (
-            1000 * 60 * 60 * 24 * Number(REMEMBER_ME_DAYS)
-          );
-        }
-      }
-  
-      next(); // Make sure to call next() so that the request can move on to other middlewares in the stack
-    };
-  });
-
-  // Start the server
-  server.start();
-}());
-```
-
 ## API 
 - **`createServer(configObject)`:** Creates and returns a server object. 
-  The returned object has two methods: `getConfig([key])`, `execute(cb)`, and `start()`.  
+  The returned object has several methods: `getConfig([key])`, `execute(cb)`, and `start()`.  
 - **`server.getConfig([key])`: Get the configuration values. 
   If the optional `key` is passed, get only the configuraton value for that key.
 - **`server.execute(callback)`:** Allows us to execute arbitrary code
-  (for example, registering middlewares) prior to starting the server. 
+  (for example, registering middlewares that need to access session data) 
+  after the session has been initialized but prior to starting the server. 
   The `callback` receives as argument an object with the following members: 
     - `app`: An instance of Express (`app = express()`).
     - `server`: An instance of Apollo Server (`server = new ApolloServer()`).
-    - `config`: An object representing the final values used in `configObject.serverConfig`.
-    - `redis`: An instance of the Redis client (`redis.createClient()`).
-    - `session`: An object that allows us to further configure the options passed to `express-session`.
   If we are using this function for registering a middleware, 
   the `callback` must call `app.use(middlewareFn)` passing it the middleware function as argument. 
   The middleware function should have the following signature: 
@@ -105,37 +55,35 @@ const serverConfig = {
     - `server`: An instance of Apollo Server (`const server = new ApolloServer()`).
 
 ## Properties of the `configObject` object passed to `createServer()`
-- **`serverConfig`** [object,
+- **`serverConfig`** [object]
     - `host` [string] (Default: 'localhost')
-
     - `port` [number] (Default: 3001)
-
-    - `redisHost` [string] (Default: 'localhost')
-
-    - `redisPort` [number] (Default: 6379)
-
     - `allowedOrigins` [array]: used for CORS. 
       Requests from hosts not specified in the array will be rejected (Default: `['localhost']`).
       
       **Important:** To be able to test your GraphQL server or make requests to it from the online 
       GraphQL playground (say, during development), add **"https://studio.apollographql.com"** 
       to the list of allowed origins. 
-
     - `https` [boolean]: If true, serve requests over HTTPS (Default: `false`).
       If set to true, the port is automatically `443` irrespective of the value of the `port` key.
-
     - `sslPrivateKey` [string]: A string representing the private key to use for HTTPS. (Default: empty string)
       This is required (cannot be empty) if `https` is set to `true`. 
-
     - `sslPublicCert` [string]: A string representing the public certificate (fullchain) to use for HTTPS.
       (Default: empty string). Required if `https` is set to `true`.
-
     - `sslVerifyCertificates` [boolean] (Default: `false`)
+- **`sessionConfig`**: [object]: Allows configuring [`express-session`][]
+    - `name` [string]: The name of the session ID cookie, defaults to `connect.sid`.
+    - `store` [string]: A function that should return an 
+      [`express-session`-compatible session store instance][express-session-stores]. 
+      The function receives an `express-session` instance as its first argument.
+      defaults to a new `MemoryStore` instance. 
 
-    - `sessionSecret` [string]: Hard-to-guess string to use for signing the sessions.
-      This field is required. (Default: empty string)
-
-    - `sessionExpiry` [number]: Session expiry time (in minutes) (Default: `0`)
+      `express-graphql-server` comes with an implementation for Redis store. 
+      If you plan to use Redis as session store and have a Redis instance running, 
+      you can use the included Redis store implementation. 
+      See the [examples](examples) folder and the [Example](#example) section for how to do this.
+    - `secret` [string|array]: The secret used to sign the session ID cookie.
+    - `expiry` [number]: The session expiration time (in minutes) (Default: `0`).
 - **`schema`**: [sting, required]: Your GraphQL schema 
 - **`resolvers`**: [object, required]: Your GraphQL resolvers 
 - **`context`**: [function|object, optional]: Allows you to pass in any values to the context object. 
@@ -144,10 +92,87 @@ const serverConfig = {
   `context` can be either an object or a function. 
   If it is a function, the function automatically receives a context object as an argument. 
   The function must return a key-value object as specified above.  
-
-
+- **`onCreate`**: [function]: A function to call after the server has been created, 
+  but before the session has been initialized. This allows us to, for example, register middleware 
+  that's not dependent on session data and may even need to make some configuration to [`express-session`][]. 
+  It receives an object with the following members:
+    - `app`: The app instance (`app = express()`)
+    - `sessionConfig`: The session configuration options applied to `express-session`, which we can also write to.
 
 See the **<a href="examples/">examples</a>** directory.
+
+## Example
+```js
+const { createServer } = require("express-graphql-server");
+const schema = require("path/to/your/schema");
+const resolvers = require("path/to/your/resolvers");
+
+const serverConfig = { 
+  host                  : "localhost", 
+  port                  : 3001, 
+  allowedOrigins        : ["http://localhost",  "https://studio.apollographql.com"], 
+  https                 : false, 
+  sslPrivateKey         : "",
+  sslPublicCert         : "",
+  sslVerifyCertificates : false,
+};
+
+const sessionConfig = {
+  name: "connect.sid", 
+  store: null, // use MemoryStore instance in development
+  secret: "some secret string",
+  expiry: 0
+};
+
+/* To use the included Redis store implementation for sessionConfig.store,
+ * you can use this code: 
+ */
+
+/*
+const { createRedisStore } = require("express-graphql-server");
+
+const redisStore = createRedisStore({ 
+  host: REDIS_HOST, 
+  port: REDIS_PORT, 
+  onConnect: () => console.log("Successful connection to Redis!"), 
+  onError: (err) => console.warn("Redis connection error"),
+});
+
+sessionConfig.store = redisStore;
+*/
+
+(async function runServer() { 
+  // Create the server
+  const server = await createServer({ 
+    serverConfig, 
+    sessionConfig, 
+    schema, 
+    resolvers, 
+    context: null, 
+    onCreate: function({ app, sessionConfig }) {
+      // Use a middleware to implement a "remember user" feature 
+      // for a logged-in user
+      const REMEMBER_ME_DAYS = 30; // number of days to remember user for
+
+      return (req, res, next) => {
+        if(req.body.query?.indexOf("mutation login") === 0) {
+          if(req.body.variables?.rememberUser) {
+            sessionConfig.rolling = false;
+            sessionConfig.cookie.maxAge = (
+              1000 * 60 * 60 * 24 * Number(REMEMBER_ME_DAYS)
+            );
+          }
+        }
+  
+        next(); // Make sure to call next() so that the request can move on to other middlewares in the stack
+      };
+    }
+  });
+
+  // Start the server
+  server.start();
+}());
+```
 
 ## Running the examples in the `examples/` directory 
 To run the examples, 
@@ -182,4 +207,6 @@ from within the target example directory, then open your browser to `localhost:5
 
 
 
+[express-session]: https://www.npmjs.com/package/express-session
 [mongo-db-replica-set]: https://github.com/simplymichael/mongo-db-replica-set
+[express-session-stores]: https://www.npmjs.com/package/express-session#compatible-session-stores

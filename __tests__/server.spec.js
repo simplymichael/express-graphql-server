@@ -14,15 +14,17 @@ chai.use(chaiHttp);
 const defaultServerConfig = {
   host                  : "localhost", 
   port                  : 3001, 
-  redisHost             : "localhost",
-  redisPort             : 6379,
   allowedOrigins        : ["http://127.0.0.1", "http://localhost", "https://localhost"], 
   https                 : false, 
   sslPrivateKey         : "",
   sslPublicCert         : "",
   sslVerifyCertificates : false,
-  sessionSecret         : "s3cretStr!ng",
-  sessionExpiry         : 0, 
+};
+
+const defaultSessionConfig = {
+  name: "connect.sid",
+  secret : "s3cretStr!ng",
+  expiry : 0, 
 };
 
 after(function(done) {
@@ -37,9 +39,10 @@ describe("createServer", function() {
 
     expect(server).to.have.property("execute").to.be.a("function");
     expect(server).to.have.property("start").to.be.a("function");
-    expect(server).to.have.property("getConfig").to.be.a("function");
+    expect(server).to.have.property("getServerConfig").to.be.a("function");
+    expect(server).to.have.property("getSessionConfig").to.be.a("function");
 
-    expect(server.getConfig()).to.deep.equal({ ...defaultServerConfig, sessionSecret: "" });
+    expect(server.getServerConfig()).to.deep.equal(defaultServerConfig);
 
     server = null;
   });
@@ -48,17 +51,22 @@ describe("createServer", function() {
     const serverConfig = { 
       ...defaultServerConfig, 
       port: 8084, 
-      redisPort: 8085
     };
 
-    let server = await createServer({ serverConfig, schema, resolvers, context: null });
+    const sessionConfig = {
+      ...defaultSessionConfig, 
+      expiry: 15,
+    };
+
+    let server = await createServer({ serverConfig, sessionConfig, schema, resolvers, context: null });
 
     expect(server).to.have.property("execute").to.be.a("function");
     expect(server).to.have.property("start").to.be.a("function");
-    expect(server).to.have.property("getConfig").to.be.a("function");
+    expect(server).to.have.property("getServerConfig").to.be.a("function");
+    expect(server).to.have.property("getSessionConfig").to.be.a("function");
 
-    expect(server.getConfig()).to.deep.equal(serverConfig);
-    expect(server.getConfig()).not.to.deep.equal(defaultServerConfig);
+    expect(server.getServerConfig()).to.deep.equal(serverConfig);
+    expect(server.getServerConfig()).not.to.deep.equal(defaultServerConfig);
 
     server = null;
   });
@@ -68,8 +76,11 @@ describe("Server", function() {
   const serverConfig = { 
     ...defaultServerConfig, 
     port: 8084, 
-    redisPort: 8085
   }; 
+
+  const sessionConfig = {
+    ...defaultSessionConfig,
+  };
 
   const serverUrl = `${serverConfig.host}:${serverConfig.port}`;
   const graphqlRoute = "/graphql";
@@ -77,7 +88,7 @@ describe("Server", function() {
   let server;
 
   before(async function() { 
-    server = await createServer({ serverConfig, schema, resolvers, context: null });
+    server = await createServer({ serverConfig, sessionConfig, schema, resolvers, context: null });
 
     server.start();
   }); 
