@@ -24,16 +24,15 @@ npm install express-graphql-server
 - Allows passing and sharing of values to and by resolvers via a `context` object
 
 ## API 
-- **`createServer(configObject)`:** Creates and returns a server object. 
-  The returned object has several methods: `getConfig([key])`, `execute(cb)`, and `start()`.  
-- **`server.getConfig([key])`: Get the configuration values. 
+- **`createServer(options)`:** Creates and returns an object 
+  with the following methods: `getServerConfig([key])`, `call(fn)`, and `start()`.  
+- **`server.getServerConfig([key])`:** Get the server configuration values (the applied `serverConfig`). 
   If the optional `key` is passed, get only the configuraton value for that key.
-- **`server.execute(callback)`:** Allows us to execute arbitrary code
+- **`server.call(callback)`:** Allows us to execute arbitrary code
   (for example, registering middlewares that need to access session data) 
   after the session has been initialized but prior to starting the server. 
   The `callback` receives as argument an object with the following members: 
     - `app`: An instance of Express (`app = express()`).
-    - `server`: An instance of Apollo Server (`server = new ApolloServer()`).
   If we are using this function for registering a middleware, 
   the `callback` must call `app.use(middlewareFn)` passing it the middleware function as argument. 
   The middleware function should have the following signature: 
@@ -51,7 +50,7 @@ npm install express-graphql-server
     - `app`: An instance of Express (`const app = express()`).
     - `server`: An instance of Apollo Server (`const server = new ApolloServer()`).
 
-## Properties of the `configObject` object passed to `createServer()`
+## Properties of the `options` object passed to `createServer()`
 - **`serverConfig`** [object]
     - `host` [string] (Default: 'localhost')
     - `port` [number] (Default: 3001)

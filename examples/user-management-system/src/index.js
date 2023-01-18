@@ -2,6 +2,7 @@
 
 const fs = require("fs"); 
 const path = require("path"); 
+const morgan = require("morgan");
 const env = require("./dotenv");
 const services = require("./services");
 const { schema, resolvers } = require("./schema");
@@ -15,6 +16,16 @@ const {
 
 const environment = NODE_ENV || "production";
 const useHttps = Number(ENABLE_HTTPS) !== 0;
+
+const logDir = path.resolve(__dirname, "..", ".logs");
+const logFile = `${logDir}/requests.log`;
+
+fs.existsSync(logDir) || fs.mkdirSync(logDir, { recursive: true });
+
+const fd = fs.openSync(logFile, "a"); // If the log file does not exist, attempt to create it
+fs.closeSync(fd);
+
+const requestLogStream = fs.createWriteStream(logFile, { flags: "a" });
 
 const serverConfig = { 
   host           : APP_HOST, 
@@ -62,6 +73,10 @@ function onCreate({ app, sessionConfig }) {
     resolvers, 
     context: { services }, 
     onCreate 
+  });
+
+  server.call(function({ app }) {
+    app.use(morgan("combined", { stream: requestLogStream }));
   });
 
   server.start();

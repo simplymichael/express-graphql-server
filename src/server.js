@@ -144,17 +144,31 @@ module.exports = async function createServer({ serverConfig, sessionConfig, sche
     
   // End HTTPS setup 
 
-  return { 
-    execute: invoke.bind(this),
-    start: startServer.bind(this),
-    getServerConfig : (key) => (key ? config[key] : config),
-    getSessionConfig: (key) => (key ? sessionOptions[key] : sessionOptions),
-  };
 
+  const api = {};
+
+  defineMethod(api, "call", invoke);
+  defineMethod(api, "start", startServer);
+  defineMethod(api, "getServerConfig", getServerConfig);
+
+  return api;
+
+  
+  // API functions
+  /**
+   * Function invoke: execute arbitratry code 
+   * 
+   * @param {Function} cb The callback to invoke 
+   */
   function invoke(cb) { 
-    return cb({ app, server });
+    return cb({ app });
   }
 
+  /**
+   * Function startServer: starts the server listening on supplied hostname and port
+   * 
+   * @returns {Object}
+   */
   async function startServer() { 
     const serverUrl = `http${secure ? "s" : ""}://${host}:${port}${server.graphqlPath}`;
 
@@ -173,5 +187,33 @@ module.exports = async function createServer({ serverConfig, sessionConfig, sche
     serverStarted = true;
 
     return { server, app };
+  }
+
+  /**
+   * Function getServerConfig: returns the server configuration value
+   * 
+   * @param {String} key 
+   * @returns {mixed: String|Array}
+   */
+  function getServerConfig(key)  {
+    return (key ? config[key] : config);
+  }
+
+  
+  // Helper functions
+  /**
+   * Function addMethod: cCreates a method on an object.
+   *
+   * @param {Object} obj
+   * @param {String} name
+   * @param {Function} fn
+   * @private
+   */
+  function defineMethod(obj, name, fn) {
+    Object.defineProperty(obj, name, {
+      configurable: true, 
+      writable: true,
+      value: fn,
+    });
   }
 };

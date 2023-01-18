@@ -37,10 +37,9 @@ describe("createServer", function() {
   it("should create the server with default config options if none passed", async function() {
     let server = await createServer({ schema, resolvers, context: {} }); 
 
-    expect(server).to.have.property("execute").to.be.a("function");
+    expect(server).to.have.property("call").to.be.a("function");
     expect(server).to.have.property("start").to.be.a("function");
     expect(server).to.have.property("getServerConfig").to.be.a("function");
-    expect(server).to.have.property("getSessionConfig").to.be.a("function");
 
     expect(server.getServerConfig()).to.deep.equal(defaultServerConfig);
 
@@ -60,10 +59,9 @@ describe("createServer", function() {
 
     let server = await createServer({ serverConfig, sessionConfig, schema, resolvers, context: null });
 
-    expect(server).to.have.property("execute").to.be.a("function");
+    expect(server).to.have.property("call").to.be.a("function");
     expect(server).to.have.property("start").to.be.a("function");
     expect(server).to.have.property("getServerConfig").to.be.a("function");
-    expect(server).to.have.property("getSessionConfig").to.be.a("function");
 
     expect(server.getServerConfig()).to.deep.equal(serverConfig);
     expect(server.getServerConfig()).not.to.deep.equal(defaultServerConfig);
