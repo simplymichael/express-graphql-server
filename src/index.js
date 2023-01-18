@@ -1,7 +1,7 @@
 "use strict";
 
 const createServer = require("./server");
-const createRedisStore = require("./redis");
+const createRedisStore = require("./stores/redis");
 
 module.exports = {
   createServer, 

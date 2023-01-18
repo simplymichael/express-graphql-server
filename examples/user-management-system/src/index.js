@@ -30,7 +30,7 @@ const sessionConfig = {
   name   : "connect.sid", 
   secret : SESSION_SECRET, 
   expiry : SESSION_EXPIRY, 
-  store  : createRedisStore({ 
+  createStore: createRedisStore({ 
     host: REDIS_HOST, 
     port: REDIS_PORT, 
     onConnect: () => console.log("Connection to Redis server successful!"), 

@@ -70,7 +70,9 @@ npm install express-graphql-server
     - `sslVerifyCertificates` [boolean] (Default: `false`)
 - **`sessionConfig`**: [object]: Allows configuring [`express-session`][]
     - `name` [string]: The name of the session ID cookie, defaults to `connect.sid`.
-    - `store` [string]: A function that should return an 
+    - `secret` [string|array]: The secret used to sign the session ID cookie.
+    - `expiry` [number]: The session expiration time (in minutes) (Default: `0`).
+    - `createStore` [callable]: A function that should return an 
       [`express-session`-compatible session store instance][express-session-stores]. 
       The function receives an `express-session` instance as its first argument.
       defaults to a new `MemoryStore` instance. 
@@ -79,8 +81,6 @@ npm install express-graphql-server
       If you plan to use Redis as session store and have a Redis instance running, 
       you can use the included Redis store implementation. 
       See the [examples](examples) folder and the [Example](#example) section for how to do this.
-    - `secret` [string|array]: The secret used to sign the session ID cookie.
-    - `expiry` [number]: The session expiration time (in minutes) (Default: `0`).
 - **`schema`**: [sting, required]: Your GraphQL schema 
 - **`resolvers`**: [object, required]: Your GraphQL resolvers 
 - **`context`**: [function|object, optional]: Allows you to pass in any values to the context object. 

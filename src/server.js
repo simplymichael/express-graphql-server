@@ -34,17 +34,17 @@ module.exports = async function createServer({ serverConfig, sessionConfig, sche
 
   const sessConfig = {
     name   : "connect.sid", 
-    store  : null,
     secret : "",
     expiry : 0, 
+    createStore : () => null,
     ...sessionConfig
   };
 
   const { 
-    name   : sessionName, 
-    store  : sessionStore,
-    secret : sessionSecret, 
-    expiry : sessionExpiry 
+    name        : sessionName, 
+    secret      : sessionSecret, 
+    expiry      : sessionExpiry, 
+    createStore : createSessionStore,
   } = sessConfig;
     
   const apolloCorsOptions = {
@@ -86,8 +86,8 @@ module.exports = async function createServer({ serverConfig, sessionConfig, sche
     }
   };
 
-  if(typeof sessionStore === "function") {
-    sessionOptions.store = await sessionStore(session);
+  if(typeof createSessionStore === "function") {
+    sessionOptions.store = await createSessionStore(session);
   }
     
   if (app.get("env") === "production") {
