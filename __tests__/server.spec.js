@@ -13,10 +13,10 @@ const { expect, should } = chai;
 should();
 chai.use(chaiHttp);
 
-let port = 8083;
-const getPort = () => { 
-  port++;
-  return port; 
+let startPort = 8083;
+const getNextPort = () => { 
+  startPort++;
+  return startPort; 
 };
 
 const graphqlRoute = "/graphql";
@@ -54,11 +54,7 @@ describe("createServer", function() {
   });
 
   it("should override default config options with supplied options", async function() { 
-    const serverConfig = { 
-      ...defaultServerConfig, 
-      port: getPort(), 
-    };
-
+    const serverConfig  = {  ...defaultServerConfig, port: getNextPort() };
     const sessionConfig = { ...defaultSessionConfig };
 
     let server = await createServer({ serverConfig, sessionConfig, schema, resolvers, context: null });
@@ -70,7 +66,7 @@ describe("createServer", function() {
   });
 
   it("should return an object that exposes a 3-method API", async function() {
-    const serverConfig = { ...defaultServerConfig };
+    const serverConfig  = { ...defaultServerConfig };
     const sessionConfig = { ...defaultSessionConfig };
 
     let server = await createServer({ serverConfig, sessionConfig, schema, resolvers, context: null });
@@ -81,6 +77,64 @@ describe("createServer", function() {
 
     server = null;
   });
+
+  it("accepts an 'onCreate' method", async function() { 
+    const route = "/on-create";
+    const serverConfig  = { ...defaultServerConfig, port: getNextPort() };
+    const sessionConfig = { ...defaultSessionConfig };
+    const serverUrl     = `${serverConfig.host}:${serverConfig.port}`;
+    
+    let server = await createServer({ serverConfig, sessionConfig, schema, resolvers, context: null, onCreate });
+    
+    const { httpServer, apolloServer } = await server.start();
+
+    chai.request(serverUrl)
+      .get(route)
+      .end((err, res) => { 
+        res.should.have.status(200);
+        res.body.should.be.an("object");
+        res.body.should.have.property("action", "onCreate");
+
+        httpServer.close();
+        apolloServer.stop();
+      });
+    
+    function onCreate({ app }) { 
+      app.get(route, (_, res) => {
+        res.json({ action: "onCreate" });
+      });
+    }
+  });
+
+  it("returns a 'call()' method", async function() { 
+    const route = "/on-call";
+    const onCreate = () => {};
+    const context  = () => ({});
+    const serverConfig  = { ...defaultServerConfig, port: getNextPort() };
+    const sessionConfig = { ...defaultSessionConfig };
+    const serverUrl     = `${serverConfig.host}:${serverConfig.port}`;
+    
+    let server = await createServer({ serverConfig, sessionConfig, schema, resolvers, context, onCreate });
+
+    server.call(function({ app }) {
+      app.get(route, (_, res) => {
+        res.json({ action: "server.call()" });
+      });
+    });
+    
+    const { httpServer, apolloServer } = await server.start();
+
+    chai.request(serverUrl)
+      .get(route)
+      .end((err, res) => { 
+        res.should.have.status(200);
+        res.body.should.be.an("object");
+        res.body.should.have.property("action", "server.call()");
+
+        httpServer.close();
+        apolloServer.stop();
+      });
+  });
 });
 
 describe("HTTP Server", function() { 
@@ -88,7 +142,7 @@ describe("HTTP Server", function() {
   let httpServer;
   let apolloServer;
   let serverRunning;
-  const serverConfig  = { ...defaultServerConfig, port: getPort() }; 
+  const serverConfig  = { ...defaultServerConfig, port: getNextPort() }; 
   const sessionConfig = { ...defaultSessionConfig };
   const serverUrl     = `${serverConfig.host}:${serverConfig.port}`;
   const context = { 
@@ -144,7 +198,7 @@ describe("HTTPS Server", function() {
   let apolloServer;
   const serverConfig = { 
     ...defaultServerConfig, 
-    port: getPort(), 
+    port: getNextPort(), 
     https: true, 
     sslPrivateKey: fs.readFileSync(path.resolve(__dirname, "ssl/privkey.pem")),
     sslPublicCert: fs.readFileSync(path.resolve(__dirname, "ssl/fullchain.pem")),
@@ -153,9 +207,9 @@ describe("HTTPS Server", function() {
   const sessionConfig = { ...defaultSessionConfig };
   const serverUrl = `https://${serverConfig.host}:${serverConfig.port}`; 
   const context = { 
-    environment: "test", 
-    contextType: "function", 
-    connection: "secure (https)",
+    environment : "test", 
+    contextType : "function", 
+    connection  : "secure (https)",
   };
 
   before(startServer); 
@@ -213,8 +267,7 @@ function makeInfoQueryRequest(serverUrl, done) {
       res.should.have.status(200);
       res.should.have.property("body").should.be.an("object");
       res.body.should.have.property("data").should.be.an("object");
-      res.body.data.should.have.property("info");
-      res.body.data.info.should.equal(infoQueryResult);
+      res.body.data.should.have.property("info", infoQueryResult);
 
       done();
     });
