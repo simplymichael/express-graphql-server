@@ -5,11 +5,8 @@ const https = require("https");
 const express = require("express");
 const { v4: uuidv4 } = require("uuid");
 const session = require("express-session");
-const { ApolloServer } = require("apollo-server-express");
-const { InMemoryLRUCache } = require("@apollo/utils.keyvaluecache");
 
-const { makeExecutableSchema } = require("@graphql-tools/schema");
-
+const createApolloServer = require("./apollo-server");
 const chromeSessionPersistenceFix = require("./chrome-session-persistence-fix");
 
 
@@ -50,46 +47,9 @@ module.exports = async function createServer({ serverConfig, sessionConfig, sche
     createStore : createSessionStore,
   } = sessConfig;
     
-  const apolloCorsOptions = {
-    credentials: true,
-    origin: (origin, callback) => {
-      if (origin === undefined || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error(`Origin "${origin}" not allowed by CORS`));
-      }
-    }
-  };
-    
+  
   const app = express();
   const isProduction = app.get("env") === "production";
-  const apolloServerOptions = { 
-    schema: makeExecutableSchema({
-      typeDefs: schema,
-      resolvers
-    }),
-    context: (ctx) => ({ 
-      ...(typeof context === "function" ? context(ctx) : context),
-      req: ctx.req,
-    }),
-  };
-
-  // Handle warning: 
-  // Persisted queries are enabled and are using an unbounded cache. 
-  // Your server is vulnerable to denial of service attacks via memory exhaustion. 
-  // Set `cache: "bounded"` or `persistedQueries: false` in your ApolloServer constructor, 
-  // or see https://go.apollo.dev/s/cache-backends for other alternatives.
-  if(isProduction) { 
-    let apolloCacheBackend = cacheBackend;
-
-    if(!apolloCacheBackend) {
-      apolloCacheBackend = new InMemoryLRUCache();
-    }
-
-    apolloServerOptions.cache = apolloCacheBackend;
-  }
-
-  const server = new ApolloServer(apolloServerOptions);
     
   // Configure session middleware options
   const sessionOptions = { 
@@ -163,6 +123,8 @@ module.exports = async function createServer({ serverConfig, sessionConfig, sche
     
   // End HTTPS setup 
 
+  const server = createApolloServer({ schema, resolvers, context, cacheBackend, isProduction });
+
 
   const api = {};
 
@@ -190,6 +152,16 @@ module.exports = async function createServer({ serverConfig, sessionConfig, sche
    */
   async function startServer() { 
     const serverUrl = `http${secure ? "s" : ""}://${host}:${port}${server.graphqlPath}`;
+    const apolloCorsOptions = {
+      credentials: true,
+      origin: (origin, callback) => {
+        if (origin === undefined || allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error(`Origin "${origin}" not allowed by CORS`));
+        }
+      }
+    };
 
     if(serverStarted) {
       return console.log(`Server already running at ${serverUrl}`);
