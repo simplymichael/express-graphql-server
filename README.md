@@ -16,19 +16,15 @@ npm install express-graphql-server
 ```
 
 ## Features 
-- Unopinionated 
-- Simple and clear configuration options
-- Quick and easy to setup
 - Support for middleware 
 - Allows specifying (via middlewares) custom (Express) routes, different from the GraphQL endpoint (`/graphql`).
-- Allows passing and sharing of values to and by resolvers via a `context` object
 
 ## API 
-- **`createServer(options)`:** Creates and returns an object 
+- **`const serverApi = createServer(options)`:** Creates and returns an object 
   with the following methods: `getServerConfig([key])`, `call(fn)`, and `start()`.  
-- **`server.getServerConfig([key])`:** Get the server configuration values (the applied `serverConfig`). 
+- **`serverApi.getServerConfig([key])`:** Get the server configuration values (the applied `serverConfig`). 
   If the optional `key` is passed, get only the configuraton value for that key.
-- **`server.call(callback)`:** Allows us to execute arbitrary code
+- **`serverApi.call(callback)`:** Allows us to execute arbitrary code
   (for example, registering middlewares that need to access session data) 
   after the session has been initialized but prior to starting the server. 
   The `callback` receives as argument an object with the following members: 
@@ -45,7 +41,7 @@ npm install express-graphql-server
     next();  
   }
   ```
-- **`server.start()`:** Starts the server running on the specified host and port.
+- **`serverApi.start()`:** Starts the GraphQL server running on the specified host and port.
   Returns an object with the following members: 
     - `app`: The underlying Express App (`const app = express()`).
     - `httpServer`: The underlying Node.js HTTP server (`const server = http(s).createServer()`)
@@ -62,6 +58,9 @@ npm install express-graphql-server
       GraphQL playground (say, during development), add **"https://studio.apollographql.com"** 
       to the list of allowed origins. 
     - `https` [boolean]: If true, serve requests over HTTPS (Default: `false`).
+    - `cacheBackend` [object]: The cache backend used by ApolloServer. 
+      (Default is a new `InMemoryLRUCache` instance).
+      See this link on [Configuring Apollo Cache Backends][apollo-cache-backends] for more.
     - `sslPrivateKey` [string]: A string representing the private key to use for HTTPS. (Default: empty string)
       This is required (cannot be empty) if `https` is set to `true`. 
     - `sslPublicCert` [string]: A string representing the public certificate (fullchain) to use for HTTPS.
@@ -205,4 +204,5 @@ from within the target example directory, then open your browser to `localhost:5
 
 [express-session]: https://www.npmjs.com/package/express-session
 [mongo-db-replica-set]: https://github.com/simplymichael/mongo-db-replica-set
+[apollo-cache-backends]: apollographql.com/docs/apollo-server/performance/cache-backends/
 [express-session-stores]: https://www.npmjs.com/package/express-session#compatible-session-stores

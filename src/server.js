@@ -6,6 +6,8 @@ const express = require("express");
 const { v4: uuidv4 } = require("uuid");
 const session = require("express-session");
 const { ApolloServer } = require("apollo-server-express");
+const { InMemoryLRUCache } = require("@apollo/utils.keyvaluecache");
+
 const { makeExecutableSchema } = require("@graphql-tools/schema");
 
 const chromeSessionPersistenceFix = require("./chrome-session-persistence-fix");
@@ -23,13 +25,14 @@ module.exports = async function createServer({ serverConfig, sessionConfig, sche
     port                  : 3001, 
     allowedOrigins        : ["http://127.0.0.1", "http://localhost", "https://localhost"], 
     https                 : false, 
+    cacheBackend          : null,
     sslPrivateKey         : "",
     sslPublicCert         : "",
     sslVerifyCertificates : false,
     ...serverConfig
   };
   const { host: appHost, port: appPort, allowedOrigins, https: enableHttps, 
-    sslPrivateKey, sslPublicCert, sslVerifyCertificates 
+    cacheBackend, sslPrivateKey, sslPublicCert, sslVerifyCertificates 
   } = config;
 
   const sessConfig = {
@@ -59,7 +62,8 @@ module.exports = async function createServer({ serverConfig, sessionConfig, sche
   };
     
   const app = express();
-  const server = new ApolloServer({
+  const isProduction = app.get("env") === "production";
+  const apolloServerOptions = { 
     schema: makeExecutableSchema({
       typeDefs: schema,
       resolvers
@@ -68,7 +72,24 @@ module.exports = async function createServer({ serverConfig, sessionConfig, sche
       ...(typeof context === "function" ? context(ctx) : context),
       req: ctx.req,
     }),
-  });
+  };
+
+  // Handle warning: 
+  // Persisted queries are enabled and are using an unbounded cache. 
+  // Your server is vulnerable to denial of service attacks via memory exhaustion. 
+  // Set `cache: "bounded"` or `persistedQueries: false` in your ApolloServer constructor, 
+  // or see https://go.apollo.dev/s/cache-backends for other alternatives.
+  if(isProduction) { 
+    let apolloCacheBackend = cacheBackend;
+
+    if(!apolloCacheBackend) {
+      apolloCacheBackend = new InMemoryLRUCache();
+    }
+
+    apolloServerOptions.cache = apolloCacheBackend;
+  }
+
+  const server = new ApolloServer(apolloServerOptions);
     
   // Configure session middleware options
   const sessionOptions = { 
@@ -90,17 +111,15 @@ module.exports = async function createServer({ serverConfig, sessionConfig, sche
     sessionOptions.store = await createSessionStore(session);
   }
     
-  if (app.get("env") === "production") {
-    // enable this if you run behind a proxy (e.g. nginx)
-    // trust first proxy
-    // app.set("trust proxy", 1);
+  if (isProduction) {
+    app.set("trust proxy", 1); // incase we are behind a proxy (e.g. nginx)
     sessionOptions.cookie.secure = true; // serve secure cookies
   }
 
   app.use(express.json());
   
   if(typeof onCreate === "function") {
-    onCreate({app, serverConfig: config, sessionConfig: sessionOptions});
+    onCreate({app, sessionConfig: sessionOptions});
   }
 
   app.use(session(sessionOptions));

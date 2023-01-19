@@ -31,6 +31,7 @@
   },
   "homepage": "https://github.com/simplymichael/express-graphql-server#readme",
   "dependencies": {
+    "@apollo/utils.keyvaluecache": "2.1.0",
     "@graphql-tools/schema": "9.0.13",
     "apollo-server": "3.11.1",
     "apollo-server-express": "3.11.1",

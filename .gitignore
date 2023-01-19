@@ -9,8 +9,8 @@ node_modules
 /build
 
 # security
-/ssl/*
-!/ssl/development
+/**/ssl/*
+!/**/ssl/development
 
 # misc
 .env

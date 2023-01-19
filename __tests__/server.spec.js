@@ -27,6 +27,7 @@ const defaultServerConfig = {
   port                  : 3001, 
   allowedOrigins        : ["http://127.0.0.1", "http://localhost", "https://localhost"], 
   https                 : false, 
+  cacheBackend          : null,
   sslPrivateKey         : "",
   sslPublicCert         : "",
   sslVerifyCertificates : false,
@@ -190,6 +191,8 @@ describe("HTTP Server", function() {
 });
 
 describe("HTTPS Server", function() { 
+  process.env.NODE_ENV = "production";
+
   // This line allows use with https
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
