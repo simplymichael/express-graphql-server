@@ -61,7 +61,6 @@ npm install express-graphql-server
       GraphQL playground (say, during development), add **"https://studio.apollographql.com"** 
       to the list of allowed origins. 
     - `https` [boolean]: If true, serve requests over HTTPS (Default: `false`).
-      If set to true, the port is automatically `443` irrespective of the value of the `port` key.
     - `sslPrivateKey` [string]: A string representing the private key to use for HTTPS. (Default: empty string)
       This is required (cannot be empty) if `https` is set to `true`. 
     - `sslPublicCert` [string]: A string representing the public certificate (fullchain) to use for HTTPS.

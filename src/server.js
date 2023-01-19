@@ -127,7 +127,7 @@ module.exports = async function createServer({ serverConfig, sessionConfig, sche
   let certOptions;
   const secure = enableHttps;
   const host = appHost;
-  const port = secure ? 443 : appPort;
+  const port = appPort;
     
   if(secure) {
     certOptions = {
