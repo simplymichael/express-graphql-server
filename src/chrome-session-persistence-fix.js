@@ -38,7 +38,7 @@ module.exports = function(session) {
       const signed = "s:" + signature.sign(val, secret);
       let data = cookie.serialize(name, signed, options); 
 
-      data = data.replace(/SameSite=None/, "SameSite=None;Secure");
+      data = data.replace("SameSite=None", "SameSite=None;Secure");
       
       const prev = res.getHeader("Set-Cookie") || [];
       const header = Array.isArray(prev) ? prev.concat(data) : [prev, data];
