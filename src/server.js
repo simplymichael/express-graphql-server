@@ -186,7 +186,11 @@ module.exports = async function createServer({ serverConfig, sessionConfig, sche
 
     serverStarted = true;
 
-    return { server, app };
+    return { 
+      app, 
+      httpServer,
+      apolloServer: server,  
+    };
   }
 
   /**

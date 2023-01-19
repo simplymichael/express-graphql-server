@@ -46,9 +46,10 @@ npm install express-graphql-server
   }
   ```
 - **`server.start()`:** Starts the server running on the specified host and port.
-  Returns an object with two members: `app` and `server`. 
-    - `app`: An instance of Express (`const app = express()`).
-    - `server`: An instance of Apollo Server (`const server = new ApolloServer()`).
+  Returns an object with the following members: 
+    - `app`: The underlying Express App (`const app = express()`).
+    - `httpServer`: The underlying Node.js HTTP server (`const server = http(s).createServer()`)
+    - `apolloServer`: The underlying Apollo Server instance (`const server = new ApolloServer()`).
 
 ## Properties of the `options` object passed to `createServer()`
 - **`serverConfig`** [object]
