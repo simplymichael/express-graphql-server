@@ -21,7 +21,7 @@ const signature = require("cookie-signature");
  */
 module.exports = function(session) {
   return function(req, res, next) {  
-    const name    = session.name || "connect.sid";
+    const name    = session.name;
     const secrets = [session.secret];
     
     // We don't carry out any checks (e.g: if(shouldSetCookie)) 
@@ -41,7 +41,7 @@ module.exports = function(session) {
       data = data.replace("SameSite=None", "SameSite=None;Secure");
       
       const prev = res.getHeader("Set-Cookie") || [];
-      const header = Array.isArray(prev) ? prev.concat(data) : [prev, data];
+      const header = prev.concat(data);
 
       res.setHeader("Set-Cookie", header);
     }
