@@ -15,10 +15,6 @@ A GraphQL server based on Apollo Server and Express.js
 npm install express-graphql-server
 ```
 
-## Features 
-- Support for middleware 
-- Allows specifying (via middlewares) custom (Express) routes, different from the GraphQL endpoint (`/graphql`).
-
 ## API 
 - **`const serverApi = createServer(options)`:** Creates and returns an object 
   with the following methods: `getServerConfig([key])`, `call(fn)`, and `start()`.  
@@ -204,5 +200,5 @@ from within the target example directory, then open your browser to `localhost:5
 
 [express-session]: https://www.npmjs.com/package/express-session
 [mongo-db-replica-set]: https://github.com/simplymichael/mongo-db-replica-set
-[apollo-cache-backends]: apollographql.com/docs/apollo-server/performance/cache-backends/
+[apollo-cache-backends]: https://apollographql.com/docs/apollo-server/performance/cache-backends/
 [express-session-stores]: https://www.npmjs.com/package/express-session#compatible-session-stores
