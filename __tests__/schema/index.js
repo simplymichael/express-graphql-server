@@ -1,3 +1,5 @@
+"use strict";
+
 const schema = require("./schema");
 const resolvers = require("./resolvers");
 

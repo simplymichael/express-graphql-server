@@ -1,3 +1,5 @@
+"use strict";
+
 const rootSchema = [
   `
   type Query {

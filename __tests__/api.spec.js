@@ -1,3 +1,5 @@
+"use strict";
+
 // prevent eslint from complaining that "it", "describe", and "after" are not defined: 
 /*eslint-env node, mocha */
 
