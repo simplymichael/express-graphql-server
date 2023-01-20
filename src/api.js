@@ -10,8 +10,6 @@ const chromeSessionPersistenceFix = require("./chrome-session-persistence-fix");
 
 
 module.exports = async function createServer({ serverConfig, sessionConfig, schema, resolvers, context, onCreate }) { 
-  let serverStarted = false;
-
   if(typeof context !== "function" && (typeof context !== "object" || context === null)) {
     context = {};
   }
@@ -151,10 +149,6 @@ module.exports = async function createServer({ serverConfig, sessionConfig, sche
       }
     };
 
-    if(serverStarted) {
-      return console.log(`Server already running at ${serverUrl}`);
-    }
-
     await server.start(); 
     
     server.applyMiddleware({ app, cors: apolloCorsOptions });
@@ -162,8 +156,6 @@ module.exports = async function createServer({ serverConfig, sessionConfig, sche
     await new Promise(resolve => httpServer.listen({ host, port }, resolve));
       
     console.log(`🚀 Server ready at ${serverUrl}`);
-
-    serverStarted = true;
 
     return { 
       app, 
