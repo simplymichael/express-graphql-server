@@ -137,7 +137,7 @@ module.exports = async function createServer({ serverConfig, sessionConfig, sche
    * @returns {Object}
    */
   async function startServer() { 
-    const serverUrl = `http${secure ? "s" : ""}://${host}:${port}${server.graphqlPath}`;
+    const serverUrl = `http${secure ? "s" : ""}://${host}:${port}`;
     const apolloCorsOptions = {
       credentials: true,
       origin: (origin, callback) => {
@@ -155,7 +155,8 @@ module.exports = async function createServer({ serverConfig, sessionConfig, sche
       
     await new Promise(resolve => httpServer.listen({ host, port }, resolve));
       
-    console.log(`🚀 Server ready at ${serverUrl}`);
+    console.log(`🚀 Express Server ready at ${serverUrl}`);
+    console.log(`🚀 GraphQL Server ready at ${serverUrl}${server.graphqlPath}`);
 
     return { 
       app, 
