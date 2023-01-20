@@ -188,6 +188,14 @@ describe("HTTP Server", function() {
     makeContextQueryRequest(serverUrl, context, "contextType");
     makeContextQueryRequest(serverUrl, context, "connection", done);
   });
+
+  it("allows requests from known origins", async function() { 
+    return await makeRequestFromKnownOrigins();
+  });
+
+  it("rejects requests from unknown origins", async function() {
+    return await makeRequestFromUnknownOrigins();
+  });
 });
 
 describe("HTTPS Server", function() { 
@@ -248,6 +256,14 @@ describe("HTTPS Server", function() {
     makeContextQueryRequest(serverUrl, context, "contextType");
     makeContextQueryRequest(serverUrl, context, "connection", done);
   });
+
+  it("allows requests from known origins", async function() { 
+    return await makeRequestFromKnownOrigins();
+  });
+
+  it("rejects requests from unknown origins", async function() {
+    return await makeRequestFromUnknownOrigins();
+  });
 });
 
 function make404Request(serverUrl, done) {
@@ -300,4 +316,117 @@ function makeContextQueryRequest(serverUrl, context, key, done) {
         done();
       }
     });
+}
+
+async function makeRequestFromKnownOrigins() {
+  const route = "/allowed-origins";
+  const options = getServerCreationOptions();
+
+  const { serverUrl, serverConfig } = options;
+  const { allowedOrigins } = serverConfig;
+  const origin = getRandomItem(allowedOrigins);
+    
+  let server = await createServer({ ...options, schema, resolvers });
+
+  server.call(function({ app }) {
+    app.get(route, (_, res) => {
+      res.json({ whitelist: allowedOrigins });
+    });
+  });
+    
+  const { httpServer, apolloServer } = await server.start();
+
+  return chai.request(serverUrl)
+    .get(route)
+    .set("origin", origin)
+    .then(function(res) { 
+      res.should.have.status(200);
+      res.body.should.be.an("object");
+      res.body.should.have.property("whitelist");
+      res.body.whitelist.should.deep.equal(allowedOrigins);
+      res.body.whitelist.should.include(origin);
+
+      return makeRequestToGraphQLEndpoint();
+    });
+
+  function makeRequestToGraphQLEndpoint() {
+    return chai.request(serverUrl)
+      .post(graphqlRoute)
+      .set("origin", origin)
+      .send({ query: "{ info }" })
+      .then((res) => { 
+        res.should.have.status(200);
+        res.should.have.property("body").should.be.an("object");
+        res.body.should.have.property("data").should.be.an("object");
+        res.body.data.should.have.property("info", infoQueryResult);
+
+        httpServer.close();
+        apolloServer.stop();
+      });
+  }
+}
+
+async function makeRequestFromUnknownOrigins() {
+  const route = "/allowed-origins";
+  const options = getServerCreationOptions();
+
+  const { serverUrl, serverConfig } = options;
+  const { allowedOrigins } = serverConfig;
+  const origin = "google.com";
+    
+  let server = await createServer({ ...options, schema, resolvers });
+
+  server.call(function({ app }) {
+    app.get(route, (_, res) => {
+      res.json({ whitelist: allowedOrigins });
+    });
+  });
+    
+  const { httpServer, apolloServer } = await server.start();
+
+  return chai.request(serverUrl)
+    .get(route)
+    .set("origin", origin)
+    .then(function(res) { 
+      res.should.have.status(500);
+      res.body.should.be.an("object");
+      res.body.should.be.empty;
+      
+      return makeRequestToGraphQLEndpoint();
+    });
+
+  function makeRequestToGraphQLEndpoint() {
+    return chai.request(serverUrl)
+      .post(graphqlRoute)
+      .set("origin", origin)
+      .send({ query: "{ info }" })
+      .then((res) => { 
+        res.should.have.status(500);
+        res.should.have.property("body").should.be.an("object");
+        res.body.should.be.empty;
+
+        httpServer.close();
+        apolloServer.stop();
+      });
+  }
+}
+
+function getServerCreationOptions() {
+  const onCreate = () => {};
+  const context  = () => ({});
+  const serverConfig  = { ...defaultServerConfig, port: getNextPort() };
+  const sessionConfig = { ...defaultSessionConfig };
+  const serverUrl     = `${serverConfig.host}:${serverConfig.port}`;
+
+  return {
+    context, 
+    onCreate, 
+    serverUrl,
+    serverConfig, 
+    sessionConfig, 
+  };
+}
+
+function getRandomItem(array) {
+  return array[Math.floor(Math.random() * array.length)];
 }

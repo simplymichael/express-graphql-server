@@ -1,5 +1,6 @@
 "use strict";
 
+const cors = require("cors");
 const express = require("express");
 const { v4: uuidv4 } = require("uuid");
 const session = require("express-session");
@@ -47,6 +48,18 @@ module.exports = async function createServer({ serverConfig, sessionConfig, sche
   
   const app = express();
   const isProduction = app.get("env") === "production";
+
+  // CORS middleware options 
+  const corsOptions = {
+    credentials: true,
+    origin: (origin, callback) => {
+      if (origin === undefined || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(`Origin "${origin}" blocked by CORS`);
+      }
+    }
+  };
     
   // Configure session middleware options
   const sessionOptions = { 
@@ -73,6 +86,7 @@ module.exports = async function createServer({ serverConfig, sessionConfig, sche
     sessionOptions.cookie.secure = true; // serve secure cookies
   }
 
+  app.use(cors(corsOptions));
   app.use(express.json());
   
   if(typeof onCreate === "function") {
@@ -81,20 +95,6 @@ module.exports = async function createServer({ serverConfig, sessionConfig, sche
 
   app.use(session(sessionOptions));
   app.use(chromeSessionPersistenceFix(sessionOptions));
-    
-  // CORS middleware
-  app.use((req, res, next) => {
-    const origin = req.headers.origin;
-    
-    if (allowedOrigins.includes(origin)) {
-      res.setHeader("Access-Control-Allow-Origin", origin);
-    }
-    
-    res.append("Access-Control-Allow-Credentials", true); // allow cookies
-    
-    //console.log(`${new Date()} - request for ${req.path}`);
-    next();
-  });
 
   const host = appHost;
   const port = appPort;
@@ -138,25 +138,15 @@ module.exports = async function createServer({ serverConfig, sessionConfig, sche
    */
   async function startServer() { 
     const serverUrl = `http${secure ? "s" : ""}://${host}:${port}`;
-    const apolloCorsOptions = {
-      credentials: true,
-      origin: (origin, callback) => {
-        if (origin === undefined || allowedOrigins.includes(origin)) {
-          callback(null, true);
-        } else {
-          callback(new Error(`Origin "${origin}" not allowed by CORS`));
-        }
-      }
-    };
 
     await server.start(); 
     
-    server.applyMiddleware({ app, cors: apolloCorsOptions });
+    server.applyMiddleware({ app, cors: corsOptions });
       
     await new Promise(resolve => httpServer.listen({ host, port }, resolve));
       
     console.log(`🚀 Express Server ready at ${serverUrl}`);
-    console.log(`🚀 GraphQL Server ready at ${serverUrl}${server.graphqlPath}`);
+    console.log(`🚀 GraphQL Endpoint available at ${serverUrl}${server.graphqlPath}`);
 
     return { 
       app, 
