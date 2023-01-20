@@ -14,10 +14,6 @@ should();
 chai.use(chaiHttp);
 
 let startPort = 8083;
-const getNextPort = () => { 
-  startPort++;
-  return startPort; 
-};
 
 const graphqlRoute = "/graphql";
 const infoQueryResult = "This is the API of a special app";
@@ -46,7 +42,7 @@ after(function(done) {
 });
 
 describe("createServer", function() {
-  it("should create the server with default config options if none passed", async function() {
+  it("creates the server with default config options if none passed", async function() {
     let server = await createServer({ schema, resolvers, context: {} }); 
 
     expect(server.getServerConfig()).to.deep.equal(defaultServerConfig);
@@ -54,7 +50,7 @@ describe("createServer", function() {
     server = null;
   });
 
-  it("should override default config options with supplied options", async function() { 
+  it("overrides default config options with supplied options", async function() { 
     const serverConfig  = {  ...defaultServerConfig, port: getNextPort() };
     const sessionConfig = { ...defaultSessionConfig };
 
@@ -66,7 +62,7 @@ describe("createServer", function() {
     server = null;
   });
 
-  it("should return an object that exposes a 3-method API", async function() {
+  it("returns an object that exposes a 3-method API", async function() {
     const serverConfig  = { ...defaultServerConfig };
     const sessionConfig = { ...defaultSessionConfig };
 
@@ -79,7 +75,56 @@ describe("createServer", function() {
     server = null;
   });
 
-  it("accepts an 'onCreate' method", async function() { 
+  it("accept an object as 'context'", async function() { 
+    const options = getServerCreationOptions();
+    const { serverUrl} = options;
+    const context = { 
+      environment: "test", 
+      contextType: "object", 
+      connection: "non-secure (http)"
+    };
+    
+    let server = await createServer({ ...options, schema, resolvers, context });
+
+    const { httpServer, apolloServer } = await server.start();
+    
+    return Promise.all([
+      makeContextQueryRequest(serverUrl, "environment", context.environment), 
+      makeContextQueryRequest(serverUrl, "contextType", context.contextType),
+      makeContextQueryRequest(serverUrl, "connection",  context.connection)
+    ]).then(function() {
+      httpServer.close();
+      apolloServer.stop();
+    });
+  });
+
+  it("accepts a function that returns an object as 'context'", async function() { 
+    const options = getSecureServerCreationOptions();
+    const { serverUrl } = options;
+    const context = { 
+      environment : "test", 
+      contextType : "function", 
+      connection  : "secure (https)",
+    };
+
+    const contextMaker = () => context;
+
+    let server = await createServer({ ...options, schema, resolvers, context: contextMaker });
+
+    const { httpServer, apolloServer } = await server.start();
+
+    return Promise.all([
+      makeContextQueryRequest(serverUrl, "environment", context.environment), 
+      makeContextQueryRequest(serverUrl, "contextType", context.contextType),
+      makeContextQueryRequest(serverUrl, "connection",  context.connection)
+    ])
+      .then(function() {
+        httpServer.close();
+        apolloServer.stop();
+      });
+  });
+
+  it("accepts an 'onCreate' function", async function() { 
     const route = "/on-create";
     const serverConfig  = { ...defaultServerConfig, port: getNextPort() };
     const sessionConfig = { ...defaultSessionConfig };
@@ -142,38 +187,23 @@ describe("HTTP Server", function() {
   let apiServer;
   let httpServer;
   let apolloServer;
-  let serverRunning;
-  const serverConfig  = { ...defaultServerConfig, port: getNextPort() }; 
-  const sessionConfig = { ...defaultSessionConfig };
-  const serverUrl     = `${serverConfig.host}:${serverConfig.port}`;
-  const context = { 
-    environment: "test", 
-    contextType: "object", 
-    connection: "non-secure (http)"
-  };
+  const options = getServerCreationOptions();
+  const { serverUrl } = options;
 
-  before(startServer); 
-  after(stopServer);
-
-  async function startServer() { 
-    apiServer = await createServer({ serverConfig, sessionConfig, schema, resolvers, context });
+  before(async function startServer() { 
+    apiServer = await createServer({ ...options, schema, resolvers });
 
     const serverApp = await apiServer.start();
 
     httpServer = serverApp.httpServer;
     apolloServer = serverApp.apolloServer;
-    serverRunning = true;
-  }
+  }); 
 
-  async function stopServer() { 
-    if(serverRunning) {
-      apiServer = null;
-      await httpServer.close();
-      await apolloServer.stop();
-
-      serverRunning = false;
-    }
-  }
+  after(async function stopServer() { 
+    apiServer = null;
+    await httpServer.close();
+    await apolloServer.stop();
+  });
 
   it("should respond with \"404\" status code when we visit /", function(done) {
     make404Request(serverUrl, done);
@@ -183,17 +213,11 @@ describe("HTTP Server", function() {
     makeInfoQueryRequest(serverUrl, done);
   });
 
-  it("accepts an object as a 'context' argument", function(done) { 
-    makeContextQueryRequest(serverUrl, context, "environment");
-    makeContextQueryRequest(serverUrl, context, "contextType");
-    makeContextQueryRequest(serverUrl, context, "connection", done);
-  });
-
-  it("allows requests from known origins", async function() { 
+  it("should accept requests from known origins", async function() { 
     return await makeRequestFromKnownOrigins();
   });
 
-  it("rejects requests from unknown origins", async function() {
+  it("should reject requests from unknown origins", async function() {
     return await makeRequestFromUnknownOrigins();
   });
 });
@@ -207,41 +231,23 @@ describe("HTTPS Server", function() {
   let apiServer;
   let httpServer;
   let apolloServer;
-  const serverConfig = { 
-    ...defaultServerConfig, 
-    port: getNextPort(), 
-    https: true, 
-    sslPrivateKey: fs.readFileSync(path.resolve(__dirname, "ssl/privkey.pem")),
-    sslPublicCert: fs.readFileSync(path.resolve(__dirname, "ssl/fullchain.pem")),
-  }; 
+  const options = getSecureServerCreationOptions();
+  const { serverUrl } = options;
 
-  const sessionConfig = { ...defaultSessionConfig };
-  const serverUrl = `https://${serverConfig.host}:${serverConfig.port}`; 
-  const context = { 
-    environment : "test", 
-    contextType : "function", 
-    connection  : "secure (https)",
-  };
-
-  before(startServer); 
-  after(stopServer);
-
-  async function startServer() { 
-    const contextMaker = () => context;
-
-    apiServer = await createServer({ serverConfig, sessionConfig, schema, resolvers, context: contextMaker });
+  before(async function startServer() { 
+    apiServer = await createServer({ ...options, schema, resolvers });
 
     const serverApp = await apiServer.start();
 
     httpServer = serverApp.httpServer;
     apolloServer = serverApp.apolloServer;
-  }
+  });
 
-  async function stopServer() { 
+  after(async function stopServer() { 
     apiServer = null;
     await httpServer.close();
     await apolloServer.stop();
-  }
+  });
 
   it("should respond with \"404\" status code when we visit /", function(done) { 
     make404Request(serverUrl, done);
@@ -251,17 +257,11 @@ describe("HTTPS Server", function() {
     makeInfoQueryRequest(serverUrl, done);
   });
 
-  it("accepts a function that returns an object as a 'context' argument", function(done) { 
-    makeContextQueryRequest(serverUrl, context, "environment");
-    makeContextQueryRequest(serverUrl, context, "contextType");
-    makeContextQueryRequest(serverUrl, context, "connection", done);
-  });
-
-  it("allows requests from known origins", async function() { 
+  it("should accept requests from known origins", async function() { 
     return await makeRequestFromKnownOrigins();
   });
 
-  it("rejects requests from unknown origins", async function() {
+  it("should reject requests from unknown origins", async function() {
     return await makeRequestFromUnknownOrigins();
   });
 });
@@ -292,8 +292,11 @@ function makeInfoQueryRequest(serverUrl, done) {
     });
 }
 
-function makeContextQueryRequest(serverUrl, context, key, done) {
-  chai.request(serverUrl)
+function makeContextQueryRequest(serverUrl, key, expectedValue) {
+  // > When using Promises, you need to let mocha know your code is async. 
+  // > The easiest way to do this is to return the Promise to mocha:
+  // - https://github.com/chaijs/chai-http/issues/179#issuecomment-337652903
+  return chai.request(serverUrl)
     .post(graphqlRoute)
     .send({ 
       query: `{ 
@@ -303,18 +306,14 @@ function makeContextQueryRequest(serverUrl, context, key, done) {
         }
       }` 
     })
-    .end((err, res) => { 
+    .then((res) => { 
       res.should.have.status(200);
       res.should.have.property("body").should.be.an("object");
       res.body.should.have.property("data").should.be.an("object");
       res.body.data.should.have.property("contextCheck");
       res.body.data.contextCheck.should.be.an("object");
       res.body.data.contextCheck.should.have.property("key", key);
-      res.body.data.contextCheck.should.have.property("value", context[key]);
-
-      if(typeof done === "function") {
-        done();
-      }
+      res.body.data.contextCheck.should.have.property("value", expectedValue);
     });
 }
 
@@ -336,6 +335,9 @@ async function makeRequestFromKnownOrigins() {
     
   const { httpServer, apolloServer } = await server.start();
 
+  // > When using Promises, you need to let mocha know your code is async. 
+  // > The easiest way to do this is to return the Promise to mocha:
+  // - https://github.com/chaijs/chai-http/issues/179#issuecomment-337652903
   return chai.request(serverUrl)
     .get(route)
     .set("origin", origin)
@@ -384,6 +386,9 @@ async function makeRequestFromUnknownOrigins() {
     
   const { httpServer, apolloServer } = await server.start();
 
+  // > When using Promises, you need to let mocha know your code is async. 
+  // > The easiest way to do this is to return the Promise to mocha:
+  // - https://github.com/chaijs/chai-http/issues/179#issuecomment-337652903
   return chai.request(serverUrl)
     .get(route)
     .set("origin", origin)
@@ -427,6 +432,34 @@ function getServerCreationOptions() {
   };
 }
 
+function getSecureServerCreationOptions() { 
+  const onCreate = () => {};
+  const context  = () => ({});
+  const serverConfig = { 
+    ...defaultServerConfig, 
+    port: getNextPort(), 
+    https: true, 
+    sslPrivateKey: fs.readFileSync(path.resolve(__dirname, "ssl/privkey.pem")),
+    sslPublicCert: fs.readFileSync(path.resolve(__dirname, "ssl/fullchain.pem")),
+  }; 
+
+  const sessionConfig = { ...defaultSessionConfig };
+  const serverUrl = `https://${serverConfig.host}:${serverConfig.port}`;
+
+  return {
+    context, 
+    onCreate, 
+    serverUrl,
+    serverConfig, 
+    sessionConfig, 
+  };
+}
+
 function getRandomItem(array) {
   return array[Math.floor(Math.random() * array.length)];
+}
+
+function getNextPort() { 
+  startPort++;
+  return startPort; 
 }
