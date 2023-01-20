@@ -1,4 +1,4 @@
-// stop eslint from complaining that it, describe, and after are not defined: 
+// prevent eslint from complaining that "it", "describe", and "after" are not defined: 
 /*eslint-env node, mocha */
 
 const fs = require("fs");
