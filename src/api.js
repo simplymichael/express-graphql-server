@@ -1,12 +1,11 @@
 "use strict";
 
-const http = require("http");
-const https = require("https");
 const express = require("express");
 const { v4: uuidv4 } = require("uuid");
 const session = require("express-session");
 
-const createApolloServer = require("./apollo-server");
+const createHttpServer = require("./server/http-server");
+const createApolloServer = require("./server/apollo-server");
 const chromeSessionPersistenceFix = require("./chrome-session-persistence-fix");
 
 
@@ -98,32 +97,21 @@ module.exports = async function createServer({ serverConfig, sessionConfig, sche
     //console.log(`${new Date()} - request for ${req.path}`);
     next();
   });
-    
-  // Begin HTTPS setup
-  // Cf. https://www.apollographql.com/docs/apollo-server/security/terminating-ssl/
-    
-  let httpServer;
-  let certOptions;
-  const secure = enableHttps;
+
   const host = appHost;
   const port = appPort;
-    
-  if(secure) {
-    certOptions = {
-      key: sslPrivateKey, 
-      cert: sslPublicCert, 
-      rejectUnauthorized: sslVerifyCertificates,
-    };
-  }
-    
+  const secure = enableHttps;
+
   app.set("port", port);
-  httpServer = secure
-    ? https.createServer(certOptions, app)
-    : http.createServer(app);
-    
-  // End HTTPS setup 
 
   const server = createApolloServer({ schema, resolvers, context, cacheBackend, isProduction });
+  const httpServer = createHttpServer({ 
+    app, 
+    secure: enableHttps, 
+    key: sslPrivateKey, 
+    cert: sslPublicCert,
+    verifySSLCertificates: sslVerifyCertificates,
+  });
 
 
   const api = {};
