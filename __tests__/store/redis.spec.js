@@ -27,7 +27,7 @@ const ERRORS = {
 };
 
 describe("createRedisStore", function() { 
-  it("should throw if the 'options' object is not an object", function(done) {
+  it("should throw if the 'options' argument is not an object", function(done) {
     expect(function() { createRedisStore(); }).to.throw(ERRORS.INVALID_OPTIONS);
     expect(function() { createRedisStore(null); }).to.throw(ERRORS.INVALID_OPTIONS);
 
@@ -93,11 +93,6 @@ describe("Redis session storage factory", function() {
     const onSpy = sinon.spy();
     const connectSpy = sinon.spy();
 
-    // stub the redis.createClient method 
-    // the redis.createClient method returns an object 
-    // (let's call this object redisClient)
-    // with an "on" (event listener) method 
-    // and a "connect" method
     const redisStub = sinon.stub(redis, "createClient")
       .returns({ 
         on: onSpy, 

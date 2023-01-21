@@ -7,6 +7,7 @@ const fs = require("fs");
 const path = require("path");
 const chai = require("chai");
 const chaiHttp = require("chai-http");
+const chaiAsPromised = require("chai-as-promised");
 const { schema, resolvers } = require("./schema");
 const { createServer } = require("../src");
 
@@ -14,6 +15,7 @@ const { expect, should } = chai;
 
 should();
 chai.use(chaiHttp);
+chai.use(chaiAsPromised);
 
 let startPort = 8083;
 
@@ -37,13 +39,133 @@ const defaultSessionConfig = {
   expiry : 0, 
 };
 
+const ERRORS = {
+  INVALID_ARG: "The 'options' argument must be a non-empty object",
+  MISSING_FIELD: "The ':field:' field is required", 
+  INVALID_TYPE: "The ':field:' field must be :type:",
+};
+
 after(function(done) {
   setTimeout(() => process.exit(0), 100);
 
   done();
 });
 
-describe("createServer", function() {
+describe("createServer", function() { 
+  it("should throw if the 'options' argument is not an object or is an empty object", async function() { 
+    const usage = [
+      "USAGE: createServer({",
+      "\tserverConfig: Object,",
+      "\tsessionConfig: Object,",
+      "\tschema: [string],", 
+      "\tresolvers: Object,", 
+      "\tcontext: object|Function,", 
+      "\tonCreate: Function",
+      "});"
+    ].join("\n");
+
+    const expectedErrMsg = `${ERRORS.INVALID_ARG}. ${usage}`;
+
+    await expect(createServer()).to.be.rejectedWith(expectedErrMsg);
+    await expect(createServer({})).to.be.rejectedWith(expectedErrMsg);
+    await expect(createServer(null)).to.be.rejectedWith(expectedErrMsg);
+  });
+
+  it("should throw on invalid 'serverConfig.host' field", async function() {
+    const field = "options.serverConfig.host";
+    const options = getServerCreationOptions();
+    const { serverConfig } = options;
+    serverConfig.host = " ".repeat(10);
+
+    await expect(createServer({ ...options, serverConfig }))
+      .to.be.rejectedWith(ERRORS.MISSING_FIELD.replace(":field:", field));
+
+    serverConfig.host = null;
+
+    await expect(createServer({ ...options, serverConfig }))
+      .to.be.rejectedWith(ERRORS.MISSING_FIELD.replace(":field:", field));
+  });
+
+  it("should throw on invalid 'serverConfig.port' field", async function() {
+    const field = "options.serverConfig.port";
+    const options = getServerCreationOptions();
+    const { serverConfig } = options;
+    serverConfig.port = " ".repeat(10);
+
+    await expect(createServer({ ...options, serverConfig }))
+      .to.be.rejectedWith(ERRORS.MISSING_FIELD.replace(":field:", field));
+
+    serverConfig.port = null;
+
+    await expect(createServer({ ...options, serverConfig }))
+      .to.be.rejectedWith(ERRORS.MISSING_FIELD.replace(":field:", field));
+  });
+
+  it("in https mode, should throw on invalid serverConfig: ssl key and cert", async function() {
+    const options = getSecureServerCreationOptions();
+    const { serverConfig } = options;
+
+    serverConfig.sslPrivateKey = " ".repeat(10);
+
+    const expectedErrMsg = [
+      "In 'https' mode, the", 
+      "'options.serverConfig.sslPrivateKey'", 
+      "and", 
+      "'options.serverConfig.sslPublicCert'",
+      "fields are required"
+    ].join(" ");
+
+    await expect(createServer({ ...options, serverConfig }))
+      .to.be.rejectedWith(expectedErrMsg);
+
+    serverConfig.sslPublicCert = null;
+
+    await expect(createServer({ ...options, serverConfig }))
+      .to.be.rejectedWith(expectedErrMsg);
+  });
+
+  it("should throw on invalid 'options.schema' field", async function() {
+    const field = "options.schema";
+    const expectedType = "an array of schema-definition strings";
+    const options = getServerCreationOptions();
+    
+    options.schema = "A string";
+
+    await expect(createServer(options))
+      .to.be.rejectedWith(ERRORS.INVALID_TYPE.replace(":field:", field).replace(":type:", expectedType));
+
+    options.schema = [];
+
+    await expect(createServer(options))
+      .to.be.rejectedWith(ERRORS.INVALID_TYPE.replace(":field:", field).replace(":type:", expectedType));
+
+    options.schema = [1, 2, 3];
+
+    await expect(createServer(options))
+      .to.be.rejectedWith(ERRORS.INVALID_TYPE.replace(":field:", field).replace(":type:", expectedType));
+  });
+
+  it("should throw on invalid 'options.resolvers' field", async function() { 
+    const field = "options.resolvers";
+    const expectedType = "a non-empty object";
+    const options = getServerCreationOptions();
+
+    options.resolvers = "A string";
+
+    await expect(createServer(options))
+      .to.be.rejectedWith(ERRORS.INVALID_TYPE.replace(":field:", field).replace(":type:", expectedType));
+
+    options.resolvers = null;
+
+    await expect(createServer(options))
+      .to.be.rejectedWith(ERRORS.INVALID_TYPE.replace(":field:", field).replace(":type:", expectedType));
+
+    options.resolvers = {};
+
+    await expect(createServer(options))
+      .to.be.rejectedWith(ERRORS.INVALID_TYPE.replace(":field:", field).replace(":type:", expectedType));
+  });
+
   it("creates the server with default config options if none passed", async function() {
     let server = await createServer({ schema, resolvers, context: {} }); 
 
@@ -86,7 +208,7 @@ describe("createServer", function() {
       connection: "non-secure (http)"
     };
     
-    let server = await createServer({ ...options, schema, resolvers, context });
+    let server = await createServer({ ...options, context });
 
     const { httpServer, apolloServer } = await server.start();
     
@@ -111,7 +233,7 @@ describe("createServer", function() {
 
     const contextMaker = () => context;
 
-    let server = await createServer({ ...options, schema, resolvers, context: contextMaker });
+    let server = await createServer({ ...options, context: contextMaker });
 
     const { httpServer, apolloServer } = await server.start();
 
@@ -128,11 +250,10 @@ describe("createServer", function() {
 
   it("accepts an 'onCreate' function", async function() { 
     const route = "/on-create";
-    const serverConfig  = { ...defaultServerConfig, port: getNextPort() };
-    const sessionConfig = { ...defaultSessionConfig };
-    const serverUrl     = `${serverConfig.host}:${serverConfig.port}`;
+    const options = getServerCreationOptions();
+    const { serverUrl } = options;
     
-    let server = await createServer({ serverConfig, sessionConfig, schema, resolvers, context: null, onCreate });
+    let server = await createServer({ ...options, onCreate });
     
     const { httpServer, apolloServer } = await server.start();
 
@@ -156,13 +277,10 @@ describe("createServer", function() {
 
   it("returns a 'call()' method", async function() { 
     const route = "/on-call";
-    const onCreate = () => {};
-    const context  = () => ({});
-    const serverConfig  = { ...defaultServerConfig, port: getNextPort() };
-    const sessionConfig = { ...defaultSessionConfig };
-    const serverUrl     = `${serverConfig.host}:${serverConfig.port}`;
+    const options = getServerCreationOptions();
+    const { serverUrl } = options;
     
-    let server = await createServer({ serverConfig, sessionConfig, schema, resolvers, context, onCreate });
+    let server = await createServer({ ...options });
 
     server.call(function({ app }) {
       app.get(route, (_, res) => {
@@ -295,9 +413,6 @@ function makeInfoQueryRequest(serverUrl, done) {
 }
 
 function makeContextQueryRequest(serverUrl, key, expectedValue) {
-  // > When using Promises, you need to let mocha know your code is async. 
-  // > The easiest way to do this is to return the Promise to mocha:
-  // - https://github.com/chaijs/chai-http/issues/179#issuecomment-337652903
   return chai.request(serverUrl)
     .post(graphqlRoute)
     .send({ 
@@ -337,9 +452,6 @@ async function makeRequestFromKnownOrigins() {
     
   const { httpServer, apolloServer } = await server.start();
 
-  // > When using Promises, you need to let mocha know your code is async. 
-  // > The easiest way to do this is to return the Promise to mocha:
-  // - https://github.com/chaijs/chai-http/issues/179#issuecomment-337652903
   return chai.request(serverUrl)
     .get(route)
     .set("origin", origin)
@@ -388,9 +500,6 @@ async function makeRequestFromUnknownOrigins() {
     
   const { httpServer, apolloServer } = await server.start();
 
-  // > When using Promises, you need to let mocha know your code is async. 
-  // > The easiest way to do this is to return the Promise to mocha:
-  // - https://github.com/chaijs/chai-http/issues/179#issuecomment-337652903
   return chai.request(serverUrl)
     .get(route)
     .set("origin", origin)
@@ -428,6 +537,8 @@ function getServerCreationOptions() {
   return {
     context, 
     onCreate, 
+    schema, 
+    resolvers,
     serverUrl,
     serverConfig, 
     sessionConfig, 
@@ -451,6 +562,8 @@ function getSecureServerCreationOptions() {
   return {
     context, 
     onCreate, 
+    schema, 
+    resolvers,
     serverUrl,
     serverConfig, 
     sessionConfig, 

@@ -16,11 +16,28 @@ const createHttpServer = require("./server/http-server");
 const createApolloServer = require("./server/apollo-server");
 const chromeSessionPersistenceFix = require("./chrome-session-persistence-fix");
 
+/**
+ * 
+ * @param {object} options 
+ * @returns {object}
+ */
+module.exports = async function createServer(options) { 
+  const usage = [
+    "USAGE: createServer({",
+    "\tserverConfig: Object,",
+    "\tsessionConfig: Object,",
+    "\tschema: [string],", 
+    "\tresolvers: Object,", 
+    "\tcontext: object|Function,", 
+    "\tonCreate: Function",
+    "});"
+  ].join("\n");
 
-module.exports = async function createServer({ serverConfig, sessionConfig, schema, resolvers, context, onCreate }) { 
-  if(typeof context !== "function" && (typeof context !== "object" || context === null)) {
-    context = {};
+  if (typeof options !== "object" || !options || Object.keys(options).length === 0) {
+    throw new TypeError(`The 'options' argument must be a non-empty object. ${usage}`);
   }
+
+  let { serverConfig, sessionConfig, schema, resolvers, context, onCreate } = options; 
     
   const config = { 
     host                  : "localhost", 
@@ -33,8 +50,16 @@ module.exports = async function createServer({ serverConfig, sessionConfig, sche
     sslVerifyCertificates : false,
     ...serverConfig
   };
-  const { host: appHost, port: appPort, allowedOrigins, https: enableHttps, 
-    cacheBackend, sslPrivateKey, sslPublicCert, sslVerifyCertificates 
+  
+  const { 
+    host: appHost, 
+    port: appPort, 
+    allowedOrigins, 
+    https: enableHttps, 
+    cacheBackend, 
+    sslPrivateKey, 
+    sslPublicCert, 
+    sslVerifyCertificates, 
   } = config;
 
   const sessConfig = {
@@ -51,6 +76,40 @@ module.exports = async function createServer({ serverConfig, sessionConfig, sche
     expiry      : sessionExpiry, 
     createStore : createSessionStore,
   } = sessConfig;
+
+  if(!appHost || String(appHost).trim().length === 0) {
+    throw new TypeError("The 'options.serverConfig.host' field is required");
+  }
+
+  if(!appPort || String(appPort).trim().length === 0) {
+    throw new TypeError("The 'options.serverConfig.port' field is required");
+  }
+
+  if(enableHttps && (String(sslPrivateKey).trim().length === 0 || String(sslPublicCert).trim().length === 0)) {
+    throw new TypeError([
+      "In 'https' mode, the", 
+      "'options.serverConfig.sslPrivateKey'", 
+      "and", 
+      "'options.serverConfig.sslPublicCert'",
+      "fields are required"
+    ].join(" "));
+  }
+
+  if(!Array.isArray(schema) || schema.length === 0 || !isArrayOf(schema, "string")) {
+    throw new TypeError("The 'options.schema' field must be an array of schema-definition strings");
+  }
+
+  if(typeof resolvers !== "object" || !resolvers || Object.keys(resolvers).length === 0) {
+    throw new TypeError("The 'options.resolvers' field must be a non-empty object");
+  }
+
+  if(typeof context !== "function" && (typeof context !== "object" || context === null)) {
+    context = {};
+  }
+
+  if(typeof onCreate !== "function") {
+    onCreate = () => {};
+  }
     
   
   const app = express();
@@ -96,9 +155,7 @@ module.exports = async function createServer({ serverConfig, sessionConfig, sche
   app.use(cors(corsOptions));
   app.use(express.json());
   
-  if(typeof onCreate === "function") {
-    onCreate({app, sessionConfig: sessionOptions});
-  }
+  onCreate({app, sessionConfig: sessionOptions});
 
   app.use(session(sessionOptions));
   app.use(chromeSessionPersistenceFix(sessionOptions));
@@ -188,5 +245,19 @@ module.exports = async function createServer({ serverConfig, sessionConfig, sche
       writable: true,
       value: fn,
     });
+  }
+
+  /**
+   * 
+   * @param {Array} array 
+   * @param {Function} determinant called on every element of the array; should return boolean
+   * @returns {Boolean} true if the determinant returns true for every member of the array, false otherwise.
+   */
+  function arraySatisfies(array, determinant) {
+    return array.every(el => determinant(el));
+  }
+
+  function isArrayOf(array, type) {
+    return arraySatisfies(array, (el) => typeof el === type);
   }
 };
