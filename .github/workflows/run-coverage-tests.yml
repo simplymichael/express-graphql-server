@@ -1,13 +1,13 @@
 # This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
 
-name: Test Runner on branch "github-actions"
+name: Code Coverage Test Runner
 
 on:
   push:
-    branches: [ github-actions ]
+    branches: [ $default-branch, develop, github-actions ]
   pull_request:
-    branches: [ github-actions ]
+    branches: [ $default-branch, develop, github-actions ]
 
 jobs:
   build:
