@@ -575,6 +575,6 @@ function getRandomItem(array) {
 }
 
 function getNextPort() { 
-  startPort++;
-  return startPort; 
+  const port = startPort++;
+  return port; 
 }
