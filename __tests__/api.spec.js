@@ -17,7 +17,6 @@ should();
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
-let startPort = 8083;
 
 const graphqlRoute = "/graphql";
 const infoQueryResult = "This is the API of a special app";
@@ -575,6 +574,17 @@ function getRandomItem(array) {
 }
 
 function getNextPort() { 
-  const port = startPort++;
-  return port; 
+  if(!getNextPort.portGenerator) {
+    getNextPort.portGenerator = sequenceGenerator(8083);
+  }
+  
+  return getNextPort.portGenerator.next().value;
+}
+
+function* sequenceGenerator(startValue) { 
+  let nextValue = startValue || 0;
+
+  while(true) {
+    yield ++nextValue;
+  }
 }
