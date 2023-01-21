@@ -72,7 +72,7 @@ describe("createServer", function() {
 
   it("should throw on invalid 'serverConfig.host' field", async function() {
     const field = "options.serverConfig.host";
-    const options = getServerCreationOptions();
+    const options = await getServerCreationOptions();
     const { serverConfig } = options;
     serverConfig.host = " ".repeat(10);
 
@@ -87,7 +87,7 @@ describe("createServer", function() {
 
   it("should throw on invalid 'serverConfig.port' field", async function() {
     const field = "options.serverConfig.port";
-    const options = getServerCreationOptions();
+    const options = await getServerCreationOptions();
     const { serverConfig } = options;
     serverConfig.port = " ".repeat(10);
 
@@ -101,7 +101,7 @@ describe("createServer", function() {
   });
 
   it("in https mode, should throw on invalid serverConfig: ssl key and cert", async function() {
-    const options = getSecureServerCreationOptions();
+    const options = await getSecureServerCreationOptions();
     const { serverConfig } = options;
 
     serverConfig.sslPrivateKey = " ".repeat(10);
@@ -126,7 +126,7 @@ describe("createServer", function() {
   it("should throw on invalid 'options.schema' field", async function() {
     const field = "options.schema";
     const expectedType = "an array of schema-definition strings";
-    const options = getServerCreationOptions();
+    const options = await getServerCreationOptions();
     
     options.schema = "A string";
 
@@ -147,7 +147,7 @@ describe("createServer", function() {
   it("should throw on invalid 'options.resolvers' field", async function() { 
     const field = "options.resolvers";
     const expectedType = "a non-empty object";
-    const options = getServerCreationOptions();
+    const options = await getServerCreationOptions();
 
     options.resolvers = "A string";
 
@@ -174,7 +174,7 @@ describe("createServer", function() {
   });
 
   it("overrides default config options with supplied options", async function() { 
-    const serverConfig  = {  ...defaultServerConfig, port: getNextPort() };
+    const serverConfig  = {  ...defaultServerConfig, port: await getNextPort() };
     const sessionConfig = { ...defaultSessionConfig };
 
     let server = await createServer({ serverConfig, sessionConfig, schema, resolvers, context: null });
@@ -199,7 +199,7 @@ describe("createServer", function() {
   });
 
   it("accept an object as 'context'", async function() { 
-    const options = getServerCreationOptions();
+    const options = await getServerCreationOptions();
     const { serverUrl} = options;
     const context = { 
       environment: "test", 
@@ -222,7 +222,7 @@ describe("createServer", function() {
   });
 
   it("accepts a function that returns an object as 'context'", async function() { 
-    const options = getSecureServerCreationOptions();
+    const options = await getSecureServerCreationOptions();
     const { serverUrl } = options;
     const context = { 
       environment : "test", 
@@ -249,7 +249,7 @@ describe("createServer", function() {
 
   it("accepts an 'onCreate' function", async function() { 
     const route = "/on-create";
-    const options = getServerCreationOptions();
+    const options = await getServerCreationOptions();
     const { serverUrl } = options;
     
     let server = await createServer({ ...options, onCreate });
@@ -276,7 +276,7 @@ describe("createServer", function() {
 
   it("returns a 'call()' method", async function() { 
     const route = "/on-call";
-    const options = getServerCreationOptions();
+    const options = await getServerCreationOptions();
     const { serverUrl } = options;
     
     let server = await createServer({ ...options });
@@ -306,10 +306,12 @@ describe("HTTP Server", function() {
   let apiServer;
   let httpServer;
   let apolloServer;
-  const options = getServerCreationOptions();
-  const { serverUrl } = options;
+  let options;
+  let serverUrl;
 
   before(async function startServer() { 
+    options = await getServerCreationOptions();
+    serverUrl= options.serverUrl;
     apiServer = await createServer({ ...options, schema, resolvers });
 
     const serverApp = await apiServer.start();
@@ -350,10 +352,12 @@ describe("HTTPS Server", function() {
   let apiServer;
   let httpServer;
   let apolloServer;
-  const options = getSecureServerCreationOptions();
-  const { serverUrl } = options;
+  let options;
+  let serverUrl;
 
   before(async function startServer() { 
+    options = await getSecureServerCreationOptions();
+    serverUrl = options.serverUrl;
     apiServer = await createServer({ ...options, schema, resolvers });
 
     const serverApp = await apiServer.start();
@@ -435,7 +439,7 @@ function makeContextQueryRequest(serverUrl, key, expectedValue) {
 
 async function makeRequestFromKnownOrigins() {
   const route = "/allowed-origins";
-  const options = getServerCreationOptions();
+  const options = await getServerCreationOptions();
 
   const { serverUrl, serverConfig } = options;
   const { allowedOrigins } = serverConfig;
@@ -483,7 +487,7 @@ async function makeRequestFromKnownOrigins() {
 
 async function makeRequestFromUnknownOrigins() {
   const route = "/allowed-origins";
-  const options = getServerCreationOptions();
+  const options = await getServerCreationOptions();
 
   const { serverUrl, serverConfig } = options;
   const { allowedOrigins } = serverConfig;
@@ -526,10 +530,10 @@ async function makeRequestFromUnknownOrigins() {
   }
 }
 
-function getServerCreationOptions() {
+async function getServerCreationOptions() {
   const onCreate = () => {};
   const context  = () => ({});
-  const serverConfig  = { ...defaultServerConfig, port: getNextPort() };
+  const serverConfig  = { ...defaultServerConfig, port: await getNextPort() };
   const sessionConfig = { ...defaultSessionConfig };
   const serverUrl     = `${serverConfig.host}:${serverConfig.port}`;
 
@@ -544,12 +548,12 @@ function getServerCreationOptions() {
   };
 }
 
-function getSecureServerCreationOptions() { 
+async function getSecureServerCreationOptions() { 
   const onCreate = () => {};
   const context  = () => ({});
   const serverConfig = { 
     ...defaultServerConfig, 
-    port: getNextPort(), 
+    port: await getNextPort(), 
     https: true, 
     sslPrivateKey: fs.readFileSync(path.resolve(__dirname, "ssl/privkey.pem")),
     sslPublicCert: fs.readFileSync(path.resolve(__dirname, "ssl/fullchain.pem")),
@@ -577,8 +581,29 @@ function getNextPort() {
   if(!getNextPort.portGenerator) {
     getNextPort.portGenerator = sequenceGenerator(8083);
   }
+
+  if(!getNextPort.assignedPorts) {
+    getNextPort.assignedPorts = [];
+  }
+
+  return new Promise(resolve => { 
+    const staggeredTimeout = 100 + Math.floor(Math.random() * 10);
+
+    setTimeout(function() { 
+      let nextPort = getNextPort.portGenerator.next().value;
+
+      while(getNextPort.assignedPorts.includes(nextPort)) {
+        nextPort = getNextPort.portGenerator.next().value;
+      }
+
+      getNextPort.assignedPorts.push(nextPort);
+
+      resolve(nextPort);
+
+    }, staggeredTimeout);
+  });
   
-  return getNextPort.portGenerator.next().value;
+  //return getNextPort.portGenerator.next().value;
 }
 
 function* sequenceGenerator(startValue) { 
