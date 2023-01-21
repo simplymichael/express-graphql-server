@@ -5,9 +5,9 @@ name: Code Coverage Test Runner
 
 on:
   push:
-    branches: [ $default-branch, develop, github-actions ]
+    branches: [ master, develop, github-actions ]
   pull_request:
-    branches: [ $default-branch, develop, github-actions ]
+    branches: [ master, develop, github-actions ]
 
 jobs:
   build:
