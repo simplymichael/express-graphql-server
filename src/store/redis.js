@@ -10,7 +10,17 @@
 const redis = require("redis");
 const connectRedis = require("connect-redis");
 
-
+/**
+ * Setup and return a function that creates a Redis store (cache) for express-session
+ * 
+ * @param {Object} options 
+ * @param {String} [options.host] Redis host 
+ * @param {String} [options.port] Redis port 
+ * @param {Function} [options.onConnect] Listener for Redis client's `onConnect` event 
+ * @param {Function} [options.onError] Listener for Redis client's `onError` event
+ * @return {Function} Redis cache factory function
+ * @public
+ */
 module.exports = function(options) { 
   if (typeof options !== "object" || !options) {
     throw new TypeError("The 'options' argument must be an object");
@@ -34,6 +44,10 @@ module.exports = function(options) {
     throw new TypeError("The 'onError' option expects a function");
   }
 
+  /** 
+   * @param {Object} [session] express-session instance
+   * @return {Object} RedisStore (connect-redis(session)) instance
+   */
   return async function(session) {
     const redisClient = redis.createClient({
       host,

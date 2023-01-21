@@ -17,9 +17,17 @@ const createApolloServer = require("./server/apollo-server");
 const chromeSessionPersistenceFix = require("./chrome-session-persistence-fix");
 
 /**
+ * Setup the API object with the supplied options
  * 
- * @param {object} options 
- * @returns {object}
+ * @param {Object} [options]
+ * @param {Object} [options.serverConfig] Options for http server
+ * @param {Object} [options.sessionConfig] Options for session
+ * @param {Array} [options.schema] GraphQL schema definition strings
+ * @param {Object} [options.resolvers] GraphQL resolvers
+ * @param {Function|Object} [options.context] Context object to pass to GraphQL resolvers
+ * @param {Function} [options.onCreate] Function to be called after server has been created
+ * @return {Object}
+ * @public
  */
 module.exports = async function createServer(options) { 
   const usage = [
@@ -186,19 +194,24 @@ module.exports = async function createServer(options) {
 
   
   // API functions
+
   /**
-   * Function invoke: execute arbitratry code 
+   * Execute arbitratry code 
    * 
-   * @param {Function} cb The callback to invoke 
+   * @param {Function} [cb] The callback to invoke 
+   * @return {Any}
+   * @private
    */
   function invoke(cb) { 
     return cb({ app });
   }
 
   /**
-   * Function startServer: starts the server listening on supplied hostname and port
+   * Start the server htp listening on passed hostname and port
+   *   and the GraphQL server listening on the the GraphQL path (/graphql)
    * 
-   * @returns {Object}
+   * @return {Object}
+   * @private
    */
   async function startServer() { 
     const serverUrl = `http${secure ? "s" : ""}://${host}:${port}`;
@@ -220,10 +233,10 @@ module.exports = async function createServer(options) {
   }
 
   /**
-   * Function getServerConfig: returns the server configuration value
+   * Fetch server configuration (options.serverConfig)
    * 
-   * @param {String} key 
-   * @returns {mixed: String|Array}
+   * @param {String} [key] Key of the configuration value to fetch
+   * @return {Array|Boolean|Buffer|Number|Object|String}
    */
   function getServerConfig(key)  {
     return (key ? config[key] : config);
@@ -231,12 +244,13 @@ module.exports = async function createServer(options) {
 
   
   // Helper functions
+
   /**
    * Function addMethod: cCreates a method on an object.
    *
-   * @param {Object} obj
-   * @param {String} name
-   * @param {Function} fn
+   * @param {Object} [obj] Object to define property on
+   * @param {String} [name] Name of the method to define on the object
+   * @param {Function} [fn] The method to bind to the name {obj.name} defined on the object
    * @private
    */
   function defineMethod(obj, name, fn) {
@@ -248,15 +262,26 @@ module.exports = async function createServer(options) {
   }
 
   /**
+   * Determine if every member of passed array satisfies a given condition
    * 
-   * @param {Array} array 
-   * @param {Function} determinant called on every element of the array; should return boolean
-   * @returns {Boolean} true if the determinant returns true for every member of the array, false otherwise.
+   * @param {Array} [array] The array to test
+   * @param {Function} [determinant] boolean function called on every element of the array
+   * @return {Boolean} true if the determinant returns true for every member of the array, false otherwise.
+   * @private
    */
   function arraySatisfies(array, determinant) {
     return array.every(el => determinant(el));
   }
 
+  /**
+   * Determine if every member of passed array is of a given JavaScript type 
+   * (number, string, boolean, undefined, null), any value returned by typeof
+   * 
+   * @param {Array} [array] The array to test
+   * @param {String} [type] The type to test for
+   * @return {Boolean} true if every member of the array is of the target type
+   * @private
+   */
   function isArrayOf(array, type) {
     return arraySatisfies(array, (el) => typeof el === type);
   }

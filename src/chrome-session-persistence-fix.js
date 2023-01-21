@@ -14,17 +14,25 @@ const signature = require("cookie-signature");
  * Google Chrome browser requires that the cookie's value contains 'SameSite=None;Secure' 
  * in order to set the cookie on the browser. 
  * The `express-session` module internally uses the `cookie` module 
- * which only sets the SameSite to 'None' when session.cookie.sameSite value is set to 'none';
+ * which only sets SameSite to 'None' when sessionOptions.cookie.sameSite options is set to 'none';
  * As a result, Chrome refuses to set the session cookie 
  * and so does not persist session data between requests.
- * This middleware attempts to fix this issue by appending ';Secure' to the 'SameSite=None'.
+ * This middleware attempts to fix this issue by appending ';Secure' to 'SameSite=None'.
  * 
- * This module must be called after app.use(session(sessionConfigOptions)): 
- * const session = require("express-session");
- * const chromeFixer = require("./chrome-session-persistence-fix");
+ * This module must be called after `app.use(session(sessionConfigOptions))`: 
+ * const session = require('express-session');
+ * const chromeFixer = require('./chrome-session-persistence-fix');
  * 
- * app.use(session(sessionConfigOptions));
- * app.use(chromeFixer(sessionConfigOptions));
+ * app.use(session(sessionOptions));
+ * app.use(chromeFixer(sessionOptions));
+ */
+
+
+/**
+ * Fix Google Chrome's session persistence issue with "SameSite=None;"
+ * 
+ * @param {Object} [session] an instance of express-session
+ * @return {Function} middleware
  */
 module.exports = function(session) {
   return function(req, res, next) {  
@@ -32,7 +40,7 @@ module.exports = function(session) {
     const secrets = [session.secret];
     
     // We don't carry out any checks (e.g: if(shouldSetCookie)) 
-    // since express-session, which must be called before this module is called, 
+    // since express-session, which must be called before calling this function, 
     // already performs the necessary checks.
     setcookie(res, name, req.sessionID, secrets[0], req.session.cookie.data);
   
