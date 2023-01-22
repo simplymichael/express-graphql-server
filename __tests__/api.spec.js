@@ -209,7 +209,7 @@ describe("createServer", function() {
     
     let server = await createServer({ ...options, context });
 
-    const { httpServer, apolloServer } = await server.start();
+    const { httpServer, graphqlServer } = await server.start();
     
     return Promise.all([
       makeContextQueryRequest(serverUrl, "environment", context.environment), 
@@ -217,7 +217,7 @@ describe("createServer", function() {
       makeContextQueryRequest(serverUrl, "connection",  context.connection)
     ]).then(function() {
       httpServer.close();
-      apolloServer.stop();
+      graphqlServer.stop();
     });
   });
 
@@ -234,7 +234,7 @@ describe("createServer", function() {
 
     let server = await createServer({ ...options, context: contextMaker });
 
-    const { httpServer, apolloServer } = await server.start();
+    const { httpServer, graphqlServer } = await server.start();
 
     return Promise.all([
       makeContextQueryRequest(serverUrl, "environment", context.environment), 
@@ -243,7 +243,7 @@ describe("createServer", function() {
     ])
       .then(function() {
         httpServer.close();
-        apolloServer.stop();
+        graphqlServer.stop();
       });
   });
 
@@ -254,7 +254,7 @@ describe("createServer", function() {
     
     let server = await createServer({ ...options, onCreate });
     
-    const { httpServer, apolloServer } = await server.start();
+    const { httpServer, graphqlServer } = await server.start();
 
     chai.request(serverUrl)
       .get(route)
@@ -264,7 +264,7 @@ describe("createServer", function() {
         res.body.should.have.property("action", "onCreate");
 
         httpServer.close();
-        apolloServer.stop();
+        graphqlServer.stop();
       });
     
     function onCreate({ app }) { 
@@ -287,7 +287,7 @@ describe("createServer", function() {
       });
     });
     
-    const { httpServer, apolloServer } = await server.start();
+    const { httpServer, graphqlServer } = await server.start();
 
     chai.request(serverUrl)
       .get(route)
@@ -297,7 +297,7 @@ describe("createServer", function() {
         res.body.should.have.property("action", "server.call()");
 
         httpServer.close();
-        apolloServer.stop();
+        graphqlServer.stop();
       });
   });
 });
@@ -305,7 +305,7 @@ describe("createServer", function() {
 describe("HTTP Server", function() { 
   let apiServer;
   let httpServer;
-  let apolloServer;
+  let graphqlServer;
   let options;
   let serverUrl;
 
@@ -317,13 +317,13 @@ describe("HTTP Server", function() {
     const serverApp = await apiServer.start();
 
     httpServer = serverApp.httpServer;
-    apolloServer = serverApp.apolloServer;
+    graphqlServer = serverApp.graphqlServer;
   }); 
 
   after(async function stopServer() { 
     apiServer = null;
     await httpServer.close();
-    await apolloServer.stop();
+    await graphqlServer.stop();
   });
 
   it("should respond with \"404\" status code when we visit /", function(done) {
@@ -351,7 +351,7 @@ describe("HTTPS Server", function() {
 
   let apiServer;
   let httpServer;
-  let apolloServer;
+  let graphqlServer;
   let options;
   let serverUrl;
 
@@ -363,13 +363,13 @@ describe("HTTPS Server", function() {
     const serverApp = await apiServer.start();
 
     httpServer = serverApp.httpServer;
-    apolloServer = serverApp.apolloServer;
+    graphqlServer = serverApp.graphqlServer;
   });
 
   after(async function stopServer() { 
     apiServer = null;
     await httpServer.close();
-    await apolloServer.stop();
+    await graphqlServer.stop();
   });
 
   it("should respond with \"404\" status code when we visit /", function(done) { 
@@ -453,7 +453,7 @@ async function makeRequestFromKnownOrigins() {
     });
   });
     
-  const { httpServer, apolloServer } = await server.start();
+  const { httpServer, graphqlServer } = await server.start();
 
   return chai.request(serverUrl)
     .get(route)
@@ -480,7 +480,7 @@ async function makeRequestFromKnownOrigins() {
         res.body.data.should.have.property("info", infoQueryResult);
 
         httpServer.close();
-        apolloServer.stop();
+        graphqlServer.stop();
       });
   }
 }
@@ -501,7 +501,7 @@ async function makeRequestFromUnknownOrigins() {
     });
   });
     
-  const { httpServer, apolloServer } = await server.start();
+  const { httpServer, graphqlServer } = await server.start();
 
   return chai.request(serverUrl)
     .get(route)
@@ -525,7 +525,7 @@ async function makeRequestFromUnknownOrigins() {
         res.body.should.be.empty;
 
         httpServer.close();
-        apolloServer.stop();
+        graphqlServer.stop();
       });
   }
 }

@@ -14,6 +14,7 @@ const session = require("express-session");
 
 const createHttpServer = require("./server/http-server");
 const createApolloServer = require("./server/apollo-server");
+const ExpressGraphQlServer = require("./server/express-graphql-server");
 const chromeSessionPersistenceFix = require("./chrome-session-persistence-fix");
 
 /**
@@ -60,8 +61,8 @@ module.exports = async function createServer(options) {
   };
   
   const { 
-    host: appHost, 
-    port: appPort, 
+    host, 
+    port, 
     allowedOrigins, 
     https: enableHttps, 
     cacheBackend, 
@@ -85,11 +86,11 @@ module.exports = async function createServer(options) {
     createStore : createSessionStore,
   } = sessConfig;
 
-  if(!appHost || String(appHost).trim().length === 0) {
+  if(!host || String(host).trim().length === 0) {
     throw new TypeError("The 'options.serverConfig.host' field is required");
   }
 
-  if(!appPort || String(appPort).trim().length === 0) {
+  if(!port || String(port).trim().length === 0) {
     throw new TypeError("The 'options.serverConfig.port' field is required");
   }
 
@@ -160,6 +161,10 @@ module.exports = async function createServer(options) {
     sessionOptions.cookie.secure = true; // serve secure cookies
   }
 
+  // Used for whenever we do app.get("port") 
+  // Otherwise, the call to httpServer.listen({ host, port}, cb) 
+  // already gets the server listening on the port
+  app.set("port", port); 
   app.use(cors(corsOptions));
   app.use(express.json());
   
@@ -168,13 +173,8 @@ module.exports = async function createServer(options) {
   app.use(session(sessionOptions));
   app.use(chromeSessionPersistenceFix(sessionOptions));
 
-  const host = appHost;
-  const port = appPort;
   const secure = enableHttps;
-
-  app.set("port", port);
-
-  const server = createApolloServer({ schema, resolvers, context, cacheBackend, isProduction });
+  const graphQlServer = createApolloServer({ schema, resolvers, context, cacheBackend, isProduction });
   const httpServer = createHttpServer({ 
     app, 
     secure: enableHttps, 
@@ -183,54 +183,21 @@ module.exports = async function createServer(options) {
     verifySSLCertificates: sslVerifyCertificates,
   });
 
+  const apiServer = new ExpressGraphQlServer(app, graphQlServer, httpServer, host, port, secure, corsOptions);
 
-  const api = {};
-
-  defineMethod(api, "call", invoke);
-  defineMethod(api, "start", startServer);
-  defineMethod(api, "getServerConfig", getServerConfig);
-
-  return api;
-
+  Object.defineProperty(apiServer, "getServerConfig", {
+    configurable: true, 
+    writable: true,
+    value: getServerConfig,
+  });
   
-  // API functions
-
-  /**
-   * Execute arbitratry code 
-   * 
-   * @param {Function} [cb] The callback to invoke 
-   * @return {Any}
-   * @private
-   */
-  function invoke(cb) { 
-    return cb({ app });
-  }
-
-  /**
-   * Start the server htp listening on passed hostname and port
-   *   and the GraphQL server listening on the the GraphQL path (/graphql)
-   * 
-   * @return {Object}
-   * @private
-   */
-  async function startServer() { 
+  apiServer.on("ready", function() { 
     const serverUrl = `http${secure ? "s" : ""}://${host}:${port}`;
+    const graphqlPath = graphQlServer.graphqlPath;
 
-    await server.start(); 
-    
-    server.applyMiddleware({ app, cors: corsOptions });
-      
-    await new Promise(resolve => httpServer.listen({ host, port }, resolve));
-      
     console.log(`🚀 Express Server ready at ${serverUrl}`);
-    console.log(`🚀 GraphQL Endpoint available at ${serverUrl}${server.graphqlPath}`);
-
-    return { 
-      app, 
-      httpServer,
-      apolloServer: server,  
-    };
-  }
+    console.log(`🚀 GraphQL Endpoint available at ${serverUrl}${graphqlPath}`);
+  });
 
   /**
    * Fetch server configuration (options.serverConfig)
@@ -241,48 +208,34 @@ module.exports = async function createServer(options) {
   function getServerConfig(key)  {
     return (key ? config[key] : config);
   }
-
   
-  // Helper functions
-
-  /**
-   * Function addMethod: cCreates a method on an object.
-   *
-   * @param {Object} [obj] Object to define property on
-   * @param {String} [name] Name of the method to define on the object
-   * @param {Function} [fn] The method to bind to the name {obj.name} defined on the object
-   * @private
-   */
-  function defineMethod(obj, name, fn) {
-    Object.defineProperty(obj, name, {
-      configurable: true, 
-      writable: true,
-      value: fn,
-    });
-  }
-
-  /**
-   * Determine if every member of passed array satisfies a given condition
-   * 
-   * @param {Array} [array] The array to test
-   * @param {Function} [determinant] boolean function called on every element of the array
-   * @return {Boolean} true if the determinant returns true for every member of the array, false otherwise.
-   * @private
-   */
-  function arraySatisfies(array, determinant) {
-    return array.every(el => determinant(el));
-  }
-
-  /**
-   * Determine if every member of passed array is of a given JavaScript type 
-   * (number, string, boolean, undefined, null), any value returned by typeof
-   * 
-   * @param {Array} [array] The array to test
-   * @param {String} [type] The type to test for
-   * @return {Boolean} true if every member of the array is of the target type
-   * @private
-   */
-  function isArrayOf(array, type) {
-    return arraySatisfies(array, (el) => typeof el === type);
-  }
+  return apiServer;
 };
+
+
+// Helper functions
+
+/**
+ * Determine if every member of passed array satisfies a given condition
+ * 
+ * @param {Array} [array] The array to test
+ * @param {Function} [determinant] boolean function called on every element of the array
+ * @return {Boolean} true if the determinant returns true for every member of the array, false otherwise.
+ * @private
+ */
+function arraySatisfies(array, determinant) {
+  return array.every(el => determinant(el));
+}
+
+/**
+ * Determine if every member of passed array is of a given JavaScript type 
+ * (number, string, boolean, undefined, null), any value returned by typeof
+ * 
+ * @param {Array} [array] The array to test
+ * @param {String} [type] The type to test for
+ * @return {Boolean} true if every member of the array is of the target type
+ * @private
+ */
+function isArrayOf(array, type) {
+  return arraySatisfies(array, (el) => typeof el === type);
+}

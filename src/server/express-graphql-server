@@ -1,0 +1,69 @@
+const EventEmitter = require("events").EventEmitter;
+
+class ExpressGraphQlServer extends EventEmitter { 
+  app;
+  httpServer;
+  graphQlServer;
+  host; 
+  port;
+  secure;
+  corsOptions;
+
+  constructor(expressApp, graphQlServer, httpServer, host, port, secure, corsOptions) {
+    super();
+    this.#init(expressApp, graphQlServer, httpServer, host, port, secure, corsOptions);
+  }
+
+  /**
+   * Start the server http listening on passed hostname and port
+   *   and the GraphQL server listening on the the GraphQL path (/graphql)
+   * 
+   * @return {Object}
+   * @private
+   */
+   async start() { 
+    const { app, graphQlServer, httpServer, host, port, secure, corsOptions } = this;
+
+    await graphQlServer.start(); 
+    graphQlServer.applyMiddleware({ app, cors: corsOptions });
+    await new Promise(resolve => httpServer.listen({ host, port }, resolve));
+
+    this.emit("ready");
+
+    return { 
+      app, 
+      httpServer,
+      graphqlServer: graphQlServer
+    };
+  }
+
+  /**
+   * Execute arbitratry code 
+   * 
+   * @param {Function} [cb] The callback to invoke 
+   * @return {Any}
+   * @private
+   */
+  call(cb) { 
+    const { app } = this;
+
+    return cb({ app });
+  }
+
+  #init(app, graphQlServer, httpServer, host, port, secure, corsOptions) {
+    this.app = app;
+    this.graphQlServer = graphQlServer;
+    this.httpServer = httpServer;
+    this.host = host;
+    this.port = port;
+    this.secure = secure;
+
+    if(typeof corsOptions !== "object" || corsOptions === null) {
+      throw new TypeError("The cors settings is required and must ben an object");
+    }
+
+    this.corsOptions = corsOptions;
+  }
+}
+
+module.exports = ExpressGraphQlServer;
