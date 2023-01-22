@@ -2,21 +2,20 @@
 
 A GraphQL server based on Apollo Server and Express.js
 
-[![License](https://img.shields.io/github/license/simplymichael/express-graphql-server)](https://github.com/simplymichael/express-graphql-server/blob/master/LICENSE.md)
-[![Codecov](https://img.shields.io/codecov/c/github/simplymichael/express-graphql-server)](https://codecov.io/gh/simplymichael/express-graphql-server)
-[![Conventional commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-brightgreen.svg)](https://conventionalcommits.org)
-
-
-## Tech stack 
-- Node.js v14.15.5
-- NPM 6.14.11
+[![NPM Version][npm-version-image]][npm-url]
+[![NPM Downloads][npm-downloads-image]][package-url]
+[![License][license-image]][license-url]
+[![Conventional commits][conventional-commits-image]][conventional-commits-url]
+[![Codecov][codecov-image]][codecov-url]
 
 ## Installation
+
 ```sh
 npm install express-graphql-server
 ```
 
 ## API 
+
 - **`const serverApi = createServer(options)`:** Creates and returns an object 
   with the following methods: `getServerConfig([key])`, `call(fn)`, and `start()`.  
 - **`serverApi.getServerConfig([key])`:** Get the server configuration values (the applied `serverConfig`). 
@@ -45,6 +44,7 @@ npm install express-graphql-server
     - `apolloServer`: The underlying Apollo Server instance (`const server = new ApolloServer()`).
 
 ## Properties of the `options` object passed to `createServer()`
+
 - **`serverConfig`** [object]
     - `host` [string] (Default: 'localhost')
     - `port` [number] (Default: 3001)
@@ -94,6 +94,7 @@ npm install express-graphql-server
 See the **<a href="examples/">examples</a>** directory.
 
 ## Example
+
 ```js
 const { createServer } = require("express-graphql-server");
 const schema = require("path/to/your/schema");
@@ -167,6 +168,7 @@ sessionConfig.store = redisStore;
 ```
 
 ## Running the examples in the `examples/` directory 
+
 To run the examples, 
 - Ensure you have a database instance running. 
 - Navigate to the `examples/<TARGET_EXAMPLE>` directory, e.g: 
@@ -194,8 +196,13 @@ To view and edit the database data in the browser, run `npm run prisma:studio`
 from within the target example directory, then open your browser to `localhost:5555`.
 
 ## Running tests
+
 - Run `npm test` to run tests
 - Run `npm run test:coverate` to run tests with code coverage reporting
+
+## License
+
+[MIT](LICENSE.md)
 
 
 
@@ -203,3 +210,13 @@ from within the target example directory, then open your browser to `localhost:5
 [mongo-db-replica-set]: https://github.com/simplymichael/mongo-db-replica-set
 [apollo-cache-backends]: https://apollographql.com/docs/apollo-server/performance/cache-backends/
 [express-session-stores]: https://www.npmjs.com/package/express-session#compatible-session-stores
+[npm-url]: https://npmjs.com/package/express-graphql-server
+[npm-version-image]: https://img.shields.io/npm/v/express-graphql-server
+[package-url]: https://npm.im/express-graphql-server
+[npm-downloads-image]: https://img.shields.io/npm/dm/express-graphql-server
+[license-url]: https://github.com/simplymichael/express-graphql-server/blob/master/LICENSE.md
+[license-image]: https://img.shields.io/github/license/simplymichael/express-graphql-server
+[conventional-commits-image]: https://img.shields.io/badge/Conventional%20Commits-1.0.0-brightgreen.svg
+[conventional-commits-url]: https://conventionalcommits.org
+[codecov-image]: https://img.shields.io/codecov/c/github/simplymichael/express-graphql-server
+[codecov-url]: https://codecov.io/gh/simplymichael/express-graphql-server
