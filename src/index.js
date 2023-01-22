@@ -10,7 +10,12 @@
 const createServer = require("./api");
 const createRedisStore = require("./store/redis");
 
-module.exports = {
-  createServer, 
-  createRedisStore, 
-};
+/**
+ * Expose the API as the default export
+ */
+exports = module.exports = createServer;
+
+/**
+ * Expose other functionality 
+ */
+exports.createRedisStore = createRedisStore;

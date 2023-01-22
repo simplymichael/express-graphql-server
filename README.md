@@ -16,11 +16,11 @@ npm install express-graphql-server
 
 ## API 
 
-- **`const serverApi = createServer(options)`:** Creates and returns an object 
+- **`const apiServer = require("express-grahpql-server")(options)`:** Creates and returns an object 
   with the following methods: `getServerConfig([key])`, `call(fn)`, and `start()`.  
-- **`serverApi.getServerConfig([key])`:** Get the server configuration values (the applied `serverConfig`). 
+- **`apiServer.getServerConfig([key])`:** Get the server configuration values (the applied `serverConfig`). 
   If the optional `key` is passed, get only the configuraton value for that key.
-- **`serverApi.call(callback)`:** Allows us to execute arbitrary code
+- **`apiServer.call(callback)`:** Allows us to execute arbitrary code
   (for example, registering middlewares that need to access session data) 
   after the session has been initialized but prior to starting the server. 
   The `callback` receives as argument an object with the following members: 
@@ -37,13 +37,13 @@ npm install express-graphql-server
     next();  
   }
   ```
-- **`serverApi.start()`:** Starts the GraphQL server running on the specified host and port.
+- **`apiServer.start()`:** Starts the GraphQL server running on the specified host and port.
   Returns an object with the following members: 
     - `app`: The underlying Express App (`const app = express()`).
     - `httpServer`: The underlying Node.js HTTP server (`const server = http(s).createServer()`)
     - `graphqlServer`: The underlying Apollo (GraphQL) Server instance (`const server = new ApolloServer()`).
 
-## Properties of the `options` object passed to `createServer()`
+## Properties of the `options` object passed to `expressGraphQLServer()`
 
 - **`serverConfig`** [object]
     - `host` [string] (Default: 'localhost')
@@ -96,7 +96,7 @@ See the **<a href="examples/">examples</a>** directory.
 ## Example
 
 ```js
-const { createServer } = require("express-graphql-server");
+const expressGraphQLServer = require("express-graphql-server");
 const schema = require("path/to/your/schema");
 const resolvers = require("path/to/your/resolvers");
 
@@ -136,7 +136,7 @@ sessionConfig.store = redisStore;
 
 (async function runServer() { 
   // Create the server
-  const server = await createServer({ 
+  const apiServer = await expressGraphQLServer({ 
     serverConfig, 
     sessionConfig, 
     schema, 
@@ -163,7 +163,7 @@ sessionConfig.store = redisStore;
   });
 
   // Start the server
-  server.start();
+  apiServer.start();
 }());
 ```
 

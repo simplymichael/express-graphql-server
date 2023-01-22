@@ -6,7 +6,8 @@ const morgan = require("morgan");
 const env = require("./dotenv");
 const services = require("./services");
 const { schema, resolvers } = require("./schema");
-const { createServer, createRedisStore } = require("../../../src");
+const expressGraphQLServer = require("../../../src");
+const { createRedisStore } = expressGraphQLServer;
 
 const {
   NODE_ENV, APP_HOST, APP_PORT, REDIS_HOST, REDIS_PORT,
@@ -66,7 +67,7 @@ function onCreate({ app, sessionConfig }) {
 
 
 (async function initServer() { 
-  const server = await createServer({ 
+  const apiServer = await expressGraphQLServer({ 
     serverConfig, 
     sessionConfig, 
     schema, 
@@ -75,9 +76,9 @@ function onCreate({ app, sessionConfig }) {
     onCreate 
   });
 
-  server.call(function({ app }) {
+  apiServer.call(function({ app }) {
     app.use(morgan("combined", { stream: requestLogStream }));
   });
 
-  server.start();
+  apiServer.start();
 })();

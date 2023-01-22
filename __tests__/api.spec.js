@@ -9,7 +9,7 @@ const chai = require("chai");
 const chaiHttp = require("chai-http");
 const chaiAsPromised = require("chai-as-promised");
 const { schema, resolvers } = require("./schema");
-const { createServer } = require("../src");
+const createServer = require("../src");
 
 const { expect, should } = chai;
 
