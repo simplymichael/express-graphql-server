@@ -14,7 +14,7 @@ const session = require("express-session");
 
 const createHttpServer = require("./server/http-server");
 const createApolloServer = require("./server/apollo-server");
-const ExpressGraphQlServer = require("./server/express-graphql-server");
+const ExpressGraphQLServer = require("./server/express-graphql-server");
 const chromeSessionPersistenceFix = require("./chrome-session-persistence-fix");
 
 /**
@@ -136,7 +136,7 @@ module.exports = async function createServer(options) {
     }
   };
     
-  // Configure session middleware options
+  // session middleware options
   const sessionOptions = { 
     name: sessionName, 
     genid: () => uuidv4(), // generate a session ID.
@@ -161,10 +161,8 @@ module.exports = async function createServer(options) {
     sessionOptions.cookie.secure = true; // serve secure cookies
   }
 
-  // Used for whenever we do app.get("port") 
-  // Otherwise, the call to httpServer.listen({ host, port}, cb) 
-  // already gets the server listening on the port
-  app.set("port", port); 
+  app.set("port", port);
+  app.set("host", host);
   app.use(cors(corsOptions));
   app.use(express.json());
   
@@ -173,8 +171,7 @@ module.exports = async function createServer(options) {
   app.use(session(sessionOptions));
   app.use(chromeSessionPersistenceFix(sessionOptions));
 
-  const secure = enableHttps;
-  const graphQlServer = createApolloServer({ schema, resolvers, context, cacheBackend, isProduction });
+  const graphQLServer = createApolloServer({ schema, resolvers, context, cacheBackend, isProduction });
   const httpServer = createHttpServer({ 
     app, 
     secure: enableHttps, 
@@ -183,7 +180,7 @@ module.exports = async function createServer(options) {
     verifySSLCertificates: sslVerifyCertificates,
   });
 
-  const apiServer = new ExpressGraphQlServer(app, graphQlServer, httpServer, host, port, secure, corsOptions);
+  const apiServer = new ExpressGraphQLServer(app, httpServer, graphQLServer, corsOptions);
 
   Object.defineProperty(apiServer, "getServerConfig", {
     configurable: true, 
@@ -192,8 +189,8 @@ module.exports = async function createServer(options) {
   });
   
   apiServer.on("ready", function() { 
-    const serverUrl = `http${secure ? "s" : ""}://${host}:${port}`;
-    const graphqlPath = graphQlServer.graphqlPath;
+    const serverUrl = `http${enableHttps ? "s" : ""}://${host}:${port}`;
+    const graphqlPath = graphQLServer.graphqlPath;
 
     console.log(`🚀 Express Server ready at ${serverUrl}`);
     console.log(`🚀 GraphQL Endpoint available at ${serverUrl}${graphqlPath}`);

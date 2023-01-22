@@ -41,7 +41,7 @@ npm install express-graphql-server
   Returns an object with the following members: 
     - `app`: The underlying Express App (`const app = express()`).
     - `httpServer`: The underlying Node.js HTTP server (`const server = http(s).createServer()`)
-    - `apolloServer`: The underlying Apollo Server instance (`const server = new ApolloServer()`).
+    - `graphqlServer`: The underlying Apollo (GraphQL) Server instance (`const server = new ApolloServer()`).
 
 ## Properties of the `options` object passed to `createServer()`
 
