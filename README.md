@@ -3,6 +3,7 @@
 A GraphQL server based on Apollo Server and Express.js
 
 [![License](https://img.shields.io/github/license/simplymichael/express-graphql-server)](https://github.com/simplymichael/express-graphql-server/blob/master/LICENSE.md)
+[![Codecov](https://img.shields.io/codecov/c/github/simplymichael/express-graphql-server)](https://codecov.io/gh/simplymichael/express-graphql-server)
 [![Conventional commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-brightgreen.svg)](https://conventionalcommits.org)
 
 
