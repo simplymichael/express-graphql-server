@@ -39,3 +39,5 @@ jobs:
          curl -Os https://uploader.codecov.io/latest/linux/codecov 
          chmod +x codecov 
          ./codecov
+      env: 
+        CODECOV_TOKEN=67c2e0bf-0c24-49c5-a504-c92ae99c746c
