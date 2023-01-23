@@ -59,9 +59,13 @@ The `options` object passed to `createServer` has the following properties:
       (Defaults to a new `MemoryStore` instance). 
 
       `express-graphql-server` comes with an implementation that returns a Redis store instance. 
-      If you have a Redis instance running and plan to use Redis as a session store, 
-      you can use the included Redis store implementation. 
-      See the [examples](examples) folder and the [Example](#example) section for how to do this.
+      The implementation uses `redis-mock` in test and development environments, and uses `redis` otherwise.
+      If you plan to use Redis as a session store, 
+      you can use the included Redis store implementation as is in development and testing. 
+      If you plan to use it in production or staging environments, 
+      you will need to have a Redis instance configured and running. 
+
+      See the [examples](examples) folder and the [Example](#example) section for how to use it.
 - **schema {Array} [required]:** GraphQL schema definition strings
 - **resolvers {Object} [required]:** GraphQL resolvers 
 - **context {Function|Object}:** Allows you to pass in arbitrary values to the context object. 

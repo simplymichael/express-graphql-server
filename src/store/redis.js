@@ -7,8 +7,11 @@
 
 "use strict";
 
-const redis = require("redis");
+const redisReal = require("redis");
+const redisMock = require("redis-mock");
 const connectRedis = require("connect-redis");
+
+const devEnvs = ["test", "dev", "develop", "development"];
 
 /**
  * Setup and return a function that creates a Redis store (cache) for express-session
@@ -22,6 +25,9 @@ const connectRedis = require("connect-redis");
  * @public
  */
 module.exports = function(options) { 
+  const currEnv = process.env.NODE_ENV;
+  const redis   = devEnvs.includes(currEnv) ? redisMock : redisReal;
+
   if (typeof options !== "object" || !options) {
     throw new TypeError("The 'options' argument must be an object");
   }

@@ -78,8 +78,32 @@ describe("createRedisFactory", function() {
     done();
   });
 
-  it("should return a function", function(done) { 
-    const storeFactory = createRedisFactory(options);
+  it("should return a function: in development or test", function(done) { 
+    process.env.NODE_ENV = "development";
+
+    let storeFactory = createRedisFactory(options);
+
+    expect(storeFactory).to.be.a("function");
+
+    process.env.NODE_ENV = "test"; 
+
+    storeFactory = createRedisFactory(options);
+
+    expect(storeFactory).to.be.a("function");
+
+    done();
+  });
+
+  it("should return a function: in production or staging", function(done) { 
+    process.env.NODE_ENV = "production";
+
+    let storeFactory = createRedisFactory(options);
+
+    expect(storeFactory).to.be.a("function");
+
+    process.env.NODE_ENV = "staging";
+
+    storeFactory = createRedisFactory(options);
 
     expect(storeFactory).to.be.a("function");
 
