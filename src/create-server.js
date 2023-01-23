@@ -35,9 +35,9 @@ module.exports = async function createServer(options) {
     "USAGE: createServer({",
     "\tserverConfig: Object,",
     "\tsessionConfig: Object,",
-    "\tschema: [string],", 
+    "\tschema: Array<String>,", 
     "\tresolvers: Object,", 
-    "\tcontext: object|Function,", 
+    "\tcontext: Function|Object,", 
     "\tonCreate: Function",
     "});"
   ].join("\n");

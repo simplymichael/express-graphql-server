@@ -56,9 +56,9 @@ describe("createServer", function() {
       "USAGE: createServer({",
       "\tserverConfig: Object,",
       "\tsessionConfig: Object,",
-      "\tschema: [string],", 
+      "\tschema: Array<String>,", 
       "\tresolvers: Object,", 
-      "\tcontext: object|Function,", 
+      "\tcontext: Function|Object,", 
       "\tonCreate: Function",
       "});"
     ].join("\n");
