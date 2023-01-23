@@ -6,7 +6,7 @@ Node.js GraphQL server based on Apollo Server and Express.js
 [![NPM Downloads][npm-downloads-image]][package-url]
 [![License][license-image]][license-url]
 [![Conventional commits][conventional-commits-image]][conventional-commits-url]
-[![Codecov][codecov-image]][codecov-url]
+[![Coverage][codecov-image]][codecov-url]
 
 ## Installation
 
@@ -245,5 +245,5 @@ from within the target example directory, then using your browser, navigate to `
 [license-image]: https://img.shields.io/github/license/simplymichael/express-graphql-server
 [conventional-commits-image]: https://img.shields.io/badge/Conventional%20Commits-1.0.0-brightgreen.svg
 [conventional-commits-url]: https://conventionalcommits.org
-[codecov-image]: https://img.shields.io/codecov/c/github/simplymichael/express-graphql-server
+[codecov-image]: https://codecov.io/gh/simplymichael/express-graphql-server/branch/master/graph/badge.svg?token=M6YKVUY8BI
 [codecov-url]: https://codecov.io/gh/simplymichael/express-graphql-server
