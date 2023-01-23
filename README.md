@@ -213,14 +213,14 @@ To run the examples,
 - Copy the `.env.example` file inside the directory 
   to a `.env` file inside the same directory and edit the environment variable values as appropriate, 
   making sure the `DATABASE_URL` value matches your database connection details.
-- Copy the `schema.prisma.example` file to `schema.prisma` and edit as appropriate. 
+- Copy the `src/prisma/schema.prisma.example` file to `src/prisma/schema.prisma` and edit as appropriate. 
 - If you are using MongoDB, note the following: 
     - prisma requires a MongoDB replica set. 
       You can use the open source [mongo-db-replica-set][] for running the examples.
-    - Edit the `schema.prisma` file as follows:
+    - Edit the `src/prisma/schema.prisma` file as follows:
         - In the `datasource db` section, set the `provider` field value to `"mongodb"`. 
-        - For the `id` fields of the models, change them to `auto()` in place of `dbgenerated()` 
-          which is not allowed with MongoDB.
+        - For the `id` fields of the models, change `dbgenerated()` 
+          (which is not allowed with MongoDB) to `auto()`.
 - If this is the first time you are running the given example, do the following: 
     - run `npm install` to install the required dependencies.
     - If you are using MongoDb, run `npm run prisma:generate` to generate the prisma client, 
