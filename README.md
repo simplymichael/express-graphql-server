@@ -2,7 +2,8 @@
 
 Node.js GraphQL server based on Apollo Server and Express.js
 
-[![NPM Version][npm-version-image]][npm-url]
+[![NPM version][npm-version-image]][npm-url]
+[![Node version][node-version-image]][node-url]
 [![NPM Downloads][npm-downloads-image]][package-url]
 [![License][license-image]][license-url]
 [![Conventional commits][conventional-commits-image]][conventional-commits-url]
@@ -243,11 +244,13 @@ from within the target example directory, then using your browser, navigate to `
 [express-session-stores]: https://www.npmjs.com/package/express-session#compatible-session-stores
 [npm-url]: https://npmjs.com/package/express-graphql-server
 [npm-version-image]: https://img.shields.io/npm/v/express-graphql-server
+[node-url]: https://nodejs.org/
+[node-version-image]: https://img.shields.io/node/v/express-graphql-server
 [package-url]: https://npm.im/express-graphql-server
 [npm-downloads-image]: https://img.shields.io/npm/dm/express-graphql-server
 [license-url]: https://github.com/simplymichael/express-graphql-server/blob/master/LICENSE.md
 [license-image]: https://img.shields.io/github/license/simplymichael/express-graphql-server
 [conventional-commits-image]: https://img.shields.io/badge/Conventional%20Commits-1.0.0-brightgreen.svg
 [conventional-commits-url]: https://conventionalcommits.org
-[codecov-image]: https://codecov.io/gh/simplymichael/express-graphql-server/branch/master/graph/badge.svg?token=M6YKVUY8BI
+[codecov-image]: https://img.shields.io/codecov/c/github/simplymichael/express-graphql-server?token=M6YKVUY8BI
 [codecov-url]: https://codecov.io/gh/simplymichael/express-graphql-server
