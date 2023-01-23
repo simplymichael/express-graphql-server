@@ -166,7 +166,7 @@ module.exports = async function createServer(options) {
   app.use(cors(corsOptions));
   app.use(express.json());
   
-  setup({app, sessionConfig: sessionOptions});
+  setup({ app, sessionConfig: sessionOptions });
 
   app.use(session(sessionOptions));
   app.use(chromeSessionPersistenceFix(sessionOptions));

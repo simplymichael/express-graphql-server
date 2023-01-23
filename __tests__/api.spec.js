@@ -17,7 +17,6 @@ should();
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
-
 const graphqlRoute = "/graphql";
 const infoQueryResult = "This is the API of a special app";
 
@@ -247,7 +246,7 @@ describe("createServer", function() {
       });
   });
 
-  it("accepts an 'setup' function", async function() { 
+  it("accepts a 'setup' function", async function() { 
     const route = "/on-create";
     const options = await getServerCreationOptions();
     const { serverUrl } = options;
@@ -272,6 +271,66 @@ describe("createServer", function() {
         res.json({ action: "onCreate" });
       });
     }
+  });
+
+  it("The 'setup' function has access to the request body and session config but not session data", async function() {
+    let sessionOptions;
+    const route = "/setup";
+    const sessionDataNotReadyMsg = "Session data not accessible yet";
+    const options = await getServerCreationOptions();
+    const { serverUrl } = options;
+    
+    let server = await createServer({ 
+      ...options, 
+      setup: function onCreate({ app, sessionConfig }) { 
+        sessionOptions = sessionConfig; 
+
+        app.get(route, (req, res) => { 
+          req.body.customRoute = route;
+          req.body.sessionConfig = sessionConfig; 
+          req.body.sessionData = req.session ? req.session : sessionDataNotReadyMsg;
+
+          const { customRoute, sessionConfig: sessConfig, sessionData } = req.body;
+          
+          res.json({ 
+            action: "setup", 
+            requestBody: {
+              customRoute,
+              sessionConfig: sessConfig, 
+              sessionData
+            }
+          });
+        });
+      } 
+    });
+    
+    const { httpServer, graphqlServer } = await server.start();
+
+    return chai.request(serverUrl)
+      .get(route)
+      .then((res) => { 
+        // The genid function is not sent back as part of the response.sessionConfig, 
+        // because "function values are not valid JSON". 
+        // If we don't delete it from the sessionOptions object, 
+        // our deep equality comparison with the returned value from the response will fail 
+        // because the response will not contain the genid field, as stated above. 
+        // See: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#description
+        delete sessionOptions.genid;
+
+        res.should.have.status(200);
+        res.body.should.be.an("object");
+        res.body.should.have.property("action", "setup");
+        res.body.should.have.property("requestBody");
+        res.body.requestBody.should.be.an("object");
+        res.body.requestBody.should.have.property("customRoute", route);
+        res.body.requestBody.should.have.property("sessionData", sessionDataNotReadyMsg);
+        res.body.requestBody.should.have.property("sessionConfig");
+        res.body.requestBody.sessionConfig.should.be.an("object");
+        res.body.requestBody.sessionConfig.should.deep.equal(sessionOptions);
+
+        httpServer.close();
+        graphqlServer.stop();
+      });
   });
 
   it("returns a 'call()' method", async function() { 
