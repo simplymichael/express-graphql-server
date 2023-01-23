@@ -26,7 +26,7 @@ const chromeSessionPersistenceFix = require("./chrome-session-persistence-fix");
  * @param {Array} [options.schema] GraphQL schema definition strings
  * @param {Object} [options.resolvers] GraphQL resolvers
  * @param {Function|Object} [options.context] Context object to pass to GraphQL resolvers
- * @param {Function} [options.onCreate] Function to be called after server has been created
+ * @param {Function} [options.setup] Function to be called after server has been created
  * @return {Object}
  * @public
  */
@@ -38,7 +38,7 @@ module.exports = async function createServer(options) {
     "\tschema: Array<String>,", 
     "\tresolvers: Object,", 
     "\tcontext: Function|Object,", 
-    "\tonCreate: Function",
+    "\tsetup: Function",
     "});"
   ].join("\n");
 
@@ -46,7 +46,7 @@ module.exports = async function createServer(options) {
     throw new TypeError(`The 'options' argument must be a non-empty object. ${usage}`);
   }
 
-  let { serverConfig, sessionConfig, schema, resolvers, context, onCreate } = options; 
+  let { serverConfig, sessionConfig, schema, resolvers, context, setup } = options; 
     
   const config = { 
     host                  : "localhost", 
@@ -116,8 +116,8 @@ module.exports = async function createServer(options) {
     context = {};
   }
 
-  if(typeof onCreate !== "function") {
-    onCreate = () => {};
+  if(typeof setup !== "function") {
+    setup = () => {};
   }
     
   
@@ -166,7 +166,7 @@ module.exports = async function createServer(options) {
   app.use(cors(corsOptions));
   app.use(express.json());
   
-  onCreate({app, sessionConfig: sessionOptions});
+  setup({app, sessionConfig: sessionOptions});
 
   app.use(session(sessionOptions));
   app.use(chromeSessionPersistenceFix(sessionOptions));

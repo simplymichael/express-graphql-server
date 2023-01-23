@@ -73,7 +73,7 @@ function onCreate({ app, sessionConfig }) {
     schema, 
     resolvers, 
     context: { services }, 
-    onCreate 
+    setup: onCreate 
   });
 
   apiServer.call(function({ app }) {

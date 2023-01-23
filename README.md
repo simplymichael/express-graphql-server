@@ -76,12 +76,18 @@ The `options` object passed to `createServer` has the following properties:
   `context` can be either an object or a function. 
   If it is a function, the function automatically receives a context object as an argument. 
   The function must return a key-value object as specified above.  
-- **onCreate {Function}:** A function to call after the server has been created, 
-  but before the session has been initialized. This allows us to, for example, register middleware 
-  that's not dependent on session data and may even need to make some configuration to [`express-session`][]. 
-  It receives an object with the following members:
+- **setup {Function}:** Initialization function for performing arbitrary setup tasks. 
+  At the time of invoking the function, the request body can be accessed via `req.body`
+  but the session has not been initialized. 
+  We are thus still able to edit or modify the [`express-session`][] options. 
+
+  Inside this function, we can, for example, register middleware 
+  that's not dependent on session data being available. 
+  The [Example](#example) section demonstrates how to use this to implement a *remember user* feature.
+
+  The function receives an object with the following members:
     - `app`: The app instance (`const app = express()`)
-    - `sessionConfig`: The session configuration options for `express-session`, which we can also write to.
+    - `sessionConfig`: The read-write session configuration options for `express-session`.
 
 Check the **<a href="examples/">examples</a>** directory for usage examples.
 
@@ -170,7 +176,7 @@ sessionConfig.createStore = redisFactory;
     schema, 
     resolvers, 
     context: null, 
-    onCreate: function({ app, sessionConfig }) {
+    setup: function onCreate({ app, sessionConfig }) {
       // Use a middleware to implement a "remember user" feature 
       const REMEMBER_USER_FOR = 30; // number of days to remember user for
 
@@ -184,7 +190,8 @@ sessionConfig.createStore = redisFactory;
           }
         }
   
-        // Remember to call `next()` so that the request can move on to other middlewares in the chain
+        // Remember to call `next()` 
+        // so that the request can be passed on to the next middleware in the chain
         next(); 
       };
     }

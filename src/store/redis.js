@@ -63,8 +63,13 @@ module.exports = function(options) {
           
     redisClient.on("error", onError);
     redisClient.on("connect", onConnect);
-      
-    await redisClient.connect();
+    
+    // redis-mock auto connects when we call `createClient()` on it. 
+    // The client it returns does not have a `connect()` method
+    if(redis === redisReal) {
+      await redisClient.connect();
+    }
+    
   
     const RedisStore = connectRedis(session);
 

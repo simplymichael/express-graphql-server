@@ -59,7 +59,7 @@ describe("createServer", function() {
       "\tschema: Array<String>,", 
       "\tresolvers: Object,", 
       "\tcontext: Function|Object,", 
-      "\tonCreate: Function",
+      "\tsetup: Function",
       "});"
     ].join("\n");
 
@@ -247,12 +247,12 @@ describe("createServer", function() {
       });
   });
 
-  it("accepts an 'onCreate' function", async function() { 
+  it("accepts an 'setup' function", async function() { 
     const route = "/on-create";
     const options = await getServerCreationOptions();
     const { serverUrl } = options;
     
-    let server = await createServer({ ...options, onCreate });
+    let server = await createServer({ ...options, setup: onCreate });
     
     const { httpServer, graphqlServer } = await server.start();
 
