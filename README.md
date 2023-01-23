@@ -58,8 +58,8 @@ The `options` object passed to `createServer` has the following properties:
       The function receives an `express-session` instance as its first argument.
       (Defaults to a new `MemoryStore` instance). 
 
-      `express-graphql-server` comes with an implementation for Redis store. 
-      If you plan to use Redis as session store and have a Redis instance running, 
+      `express-graphql-server` comes with an implementation that returns a Redis store instance. 
+      If you have a Redis instance running and plan to use Redis as a session store, 
       you can use the included Redis store implementation. 
       See the [examples](examples) folder and the [Example](#example) section for how to do this.
 - **schema {Array} [required]:** GraphQL schema definition strings
@@ -144,9 +144,9 @@ const sessionConfig = {
  */
 
 /*
-const { createRedisStore } = require("express-graphql-server");
+const { createRedisFactory } = require("express-graphql-server");
 
-const redisFactory = createRedisStore({ 
+const redisFactory = createRedisFactory({ 
   host: REDIS_HOST, 
   port: REDIS_PORT, 
   onConnect: () => console.log("Successful connection to Redis!"), 

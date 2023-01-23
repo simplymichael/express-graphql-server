@@ -7,7 +7,7 @@ const chai = require("chai");
 const redis = require("redis");
 const session = require("express-session");
 const sinon = require("sinon");
-const { createRedisStore } = require("../../src");
+const { createRedisFactory } = require("../../src");
 
 const { expect, should } = chai;
 
@@ -26,10 +26,10 @@ const ERRORS = {
   INVALID_TYPE: "The ':option:' option expects a :type:",
 };
 
-describe("createRedisStore", function() { 
+describe("createRedisFactory", function() { 
   it("should throw if the 'options' argument is not an object", function(done) {
-    expect(function() { createRedisStore(); }).to.throw(ERRORS.INVALID_OPTIONS);
-    expect(function() { createRedisStore(null); }).to.throw(ERRORS.INVALID_OPTIONS);
+    expect(function() { createRedisFactory(); }).to.throw(ERRORS.INVALID_OPTIONS);
+    expect(function() { createRedisFactory(null); }).to.throw(ERRORS.INVALID_OPTIONS);
 
     done();
   });
@@ -37,7 +37,7 @@ describe("createRedisStore", function() {
   it("should throw if the 'host' option is empty", function(done) {
     const opts = { ...options, host: "" };
 
-    expect(createRedisStore.bind(null, opts))
+    expect(createRedisFactory.bind(null, opts))
       .to.throw(ERRORS.MISSING_OPTION.replace(":option:", "host"));
 
     done();
@@ -46,7 +46,7 @@ describe("createRedisStore", function() {
   it("should throw if the 'port' option is empty", function(done) {
     const opts = { ...options, port: "" };
 
-    expect(createRedisStore.bind(null, opts))
+    expect(createRedisFactory.bind(null, opts))
       .to.throw(ERRORS.MISSING_OPTION.replace(":option:", "port"));
 
     done();
@@ -55,7 +55,7 @@ describe("createRedisStore", function() {
   it("should throw if the 'onError' option is not a function", function(done) {
     const opts = { ...options, onError: "" };
 
-    expect(createRedisStore.bind(null, opts))
+    expect(createRedisFactory.bind(null, opts))
       .to.throw(
         ERRORS.INVALID_TYPE
           .replace(":option:", "onError")
@@ -68,7 +68,7 @@ describe("createRedisStore", function() {
   it("should throw if the 'onConnect' option is not a function", function(done) {
     const opts = { ...options, onConnect: "" };
 
-    expect(createRedisStore.bind(null, opts))
+    expect(createRedisFactory.bind(null, opts))
       .to.throw(
         ERRORS.INVALID_TYPE
           .replace(":option:", "onConnect")
@@ -79,7 +79,7 @@ describe("createRedisStore", function() {
   });
 
   it("should return a function", function(done) { 
-    const storeFactory = createRedisStore(options);
+    const storeFactory = createRedisFactory(options);
 
     expect(storeFactory).to.be.a("function");
 
@@ -89,7 +89,7 @@ describe("createRedisStore", function() {
 
 describe("Redis session storage factory", function() {
   it("should return a RedisStore (connect-redis(session)) instance", async function() { 
-    const getStore = createRedisStore(options);
+    const getStore = createRedisFactory(options);
     const onSpy = sinon.spy();
     const connectSpy = sinon.spy();
 

@@ -7,8 +7,8 @@
 
 "use strict";
 
-const createServer = require("./api");
-const createRedisStore = require("./store/redis");
+const createServer = require("./create-server");
+const createRedisFactory = require("./store/redis");
 
 /**
  * Expose the API as the default export
@@ -18,4 +18,4 @@ exports = module.exports = createServer;
 /**
  * Expose other functionality 
  */
-exports.createRedisStore = createRedisStore;
+exports.createRedisFactory = createRedisFactory;

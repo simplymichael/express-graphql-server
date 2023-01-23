@@ -7,7 +7,7 @@ const env = require("./dotenv");
 const services = require("./services");
 const { schema, resolvers } = require("./schema");
 const expressGraphQLServer = require("../../../src");
-const { createRedisStore } = expressGraphQLServer;
+const { createRedisFactory } = expressGraphQLServer;
 
 const {
   NODE_ENV, APP_HOST, APP_PORT, REDIS_HOST, REDIS_PORT,
@@ -42,7 +42,7 @@ const sessionConfig = {
   name   : "connect.sid", 
   secret : SESSION_SECRET, 
   expiry : SESSION_EXPIRY, 
-  createStore: createRedisStore({ 
+  createStore: createRedisFactory({ 
     host: REDIS_HOST, 
     port: REDIS_PORT, 
     onConnect: () => console.log("Connection to Redis server successful!"), 
