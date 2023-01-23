@@ -32,7 +32,7 @@ const chromeSessionPersistenceFix = require("./chrome-session-persistence-fix");
  */
 module.exports = async function createServer(options) { 
   const usage = [
-    "USAGE: createServer({",
+    "\nUSAGE: createServer({",
     "\tserverConfig: Object,",
     "\tsessionConfig: Object,",
     "\tschema: Array<String>,", 

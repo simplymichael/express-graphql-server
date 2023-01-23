@@ -53,7 +53,7 @@ after(function(done) {
 describe("createServer", function() { 
   it("should throw if the 'options' argument is not an object or is an empty object", async function() { 
     const usage = [
-      "USAGE: createServer({",
+      "\nUSAGE: createServer({",
       "\tserverConfig: Object,",
       "\tsessionConfig: Object,",
       "\tschema: Array<String>,", 
