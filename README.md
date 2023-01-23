@@ -228,6 +228,10 @@ from within the target example directory, then using your browser, navigate to `
 
 [MIT](LICENSE.md)
 
+## Author
+
+[Simplymichael](https://github.com/simplymichael) ([simplymichaelorji@gmail.com](mailto:simplymichaelorji@gmail.com))
+
 
 [express-session]: https://www.npmjs.com/package/express-session
 [mongo-db-replica-set]: https://github.com/simplymichael/mongo-db-replica-set
