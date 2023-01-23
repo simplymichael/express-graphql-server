@@ -228,7 +228,7 @@ from within the target example directory, then using your browser, navigate to `
 ## Running the tests
 
 - Run `npm test` to run tests
-- Run `npm run test:coverate` to run tests with code coverage reporting
+- Run `npm run test:coverage` to run tests with code coverage reporting
 
 ## License
 
