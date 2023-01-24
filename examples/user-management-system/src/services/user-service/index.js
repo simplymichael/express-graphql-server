@@ -224,6 +224,8 @@ async function updateUser(userId, newData, context) {
     const hash = await bcrypt.hash(updateData.password, BCRYPT_SALT_ROUNDS);
 
     updateData.password = hash;
+  } else {
+    updateData.password = user.password;
   }
 
   const updatedUser = await User.update(user.id, updateData);
