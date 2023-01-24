@@ -69,6 +69,51 @@ describe("createServer", function() {
     await expect(createServer(null)).to.be.rejectedWith(expectedErrMsg);
   });
 
+  it("`options.serverConfig` is optional", async function() { 
+    const sessionConfig = { ...defaultSessionConfig };
+    let server = await createServer({ sessionConfig, schema, resolvers, context: {} }); 
+
+    expect(server).to.be.an("object");
+    expect(server).to.have.property("call");
+    expect(server).to.have.property("start");
+
+    server = null;
+  });
+
+  it("`options.sessionConfig` is optional", async function() { 
+    const serverConfig = { ...defaultServerConfig };
+    let server = await createServer({ serverConfig, schema, resolvers, context: {} }); 
+
+    expect(server).to.be.an("object");
+    expect(server).to.have.property("call");
+    expect(server).to.have.property("start");
+
+    server = null;
+  });
+
+  it("should creat the server with implicit `options.serverConfig` and `options.sessionConfig`", async function() {
+    let server = await createServer({ schema, resolvers, context: {} }); 
+
+    expect(server).to.be.an("object");
+    expect(server).to.have.property("call");
+    expect(server).to.have.property("start");
+
+    server = null;
+  });
+
+  it("should create the server when passed `options.serverConfig` and `options.sessionConfig`", async function() { 
+    const serverConfig  = {  ...defaultServerConfig, port: await getNextPort() };
+    const sessionConfig = { ...defaultSessionConfig };
+
+    let server = await createServer({ serverConfig, sessionConfig, schema, resolvers, context: null });
+
+    expect(server).to.be.an("object");
+    expect(server).to.have.property("call");
+    expect(server).to.have.property("start");
+
+    server = null;
+  });
+
   it("should throw on invalid 'serverConfig.host' field", async function() {
     const field = "options.serverConfig.host";
     const options = await getServerCreationOptions();
@@ -164,27 +209,7 @@ describe("createServer", function() {
       .to.be.rejectedWith(ERRORS.INVALID_TYPE.replace(":field:", field).replace(":type:", expectedType));
   });
 
-  it("creates the server with default config options if none passed", async function() {
-    let server = await createServer({ schema, resolvers, context: {} }); 
-
-    expect(server.getServerConfig()).to.deep.equal(defaultServerConfig);
-
-    server = null;
-  });
-
-  it("overrides default config options with supplied options", async function() { 
-    const serverConfig  = {  ...defaultServerConfig, port: await getNextPort() };
-    const sessionConfig = { ...defaultSessionConfig };
-
-    let server = await createServer({ serverConfig, sessionConfig, schema, resolvers, context: null });
-
-    expect(server.getServerConfig()).to.deep.equal(serverConfig);
-    expect(server.getServerConfig()).not.to.deep.equal(defaultServerConfig);
-
-    server = null;
-  });
-
-  it("returns an object that exposes a 3-method API", async function() {
+  it("returns an object that exposes a 2-method API", async function() {
     const serverConfig  = { ...defaultServerConfig };
     const sessionConfig = { ...defaultSessionConfig };
 
@@ -192,7 +217,6 @@ describe("createServer", function() {
 
     expect(server).to.have.property("call").to.be.a("function");
     expect(server).to.have.property("start").to.be.a("function");
-    expect(server).to.have.property("getServerConfig").to.be.a("function");
 
     server = null;
   });

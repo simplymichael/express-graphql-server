@@ -27,8 +27,8 @@ const apiServer = createServer(options);
 
 ### createServer (options)
 
-Create a GraphQL server with the passed `options` and return an object that exposes a few methods to work 
-with the server: `call(fn)`, `start()`, and  `getServerConfig([key])`. 
+Create a GraphQL server with the passed `options` and 
+return an object that exposes a `start()` and a `call(fn)` method. 
 
 #### Options
 
@@ -122,8 +122,6 @@ The object exposes the following methods:
     });
   });
   ```
-- **apiServer.getServerConfig([key]):** Get the HTTP server configuration values (the applied `serverConfig`). 
-  If the optional `key` is passed, get only the configuraton value for that key.
 
 ## Example
 

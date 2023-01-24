@@ -161,8 +161,8 @@ module.exports = async function createServer(options) {
     sessionOptions.cookie.secure = true; // serve secure cookies
   }
 
-  app.set("port", port);
   app.set("host", host);
+  app.set("port", port);
   app.use(cors(corsOptions));
   app.use(express.json());
   
@@ -181,12 +181,6 @@ module.exports = async function createServer(options) {
   });
 
   const apiServer = new ExpressGraphQLServer(app, httpServer, graphQLServer, corsOptions);
-
-  Object.defineProperty(apiServer, "getServerConfig", {
-    configurable: true, 
-    writable: true,
-    value: getServerConfig,
-  });
   
   apiServer.on("ready", function() { 
     const serverUrl = `http${enableHttps ? "s" : ""}://${host}:${port}`;
@@ -196,16 +190,6 @@ module.exports = async function createServer(options) {
     console.log(`🚀 GraphQL Endpoint available at ${serverUrl}${graphqlPath}`);
   });
 
-  /**
-   * Fetch server configuration (options.serverConfig)
-   * 
-   * @param {String} [key] Key of the configuration value to fetch
-   * @return {Array|Boolean|Buffer|Number|Object|String}
-   */
-  function getServerConfig(key)  {
-    return (key ? config[key] : config);
-  }
-  
   return apiServer;
 };
 
