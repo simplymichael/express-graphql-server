@@ -57,6 +57,8 @@ module.exports = async function createServer(options) {
     sslPrivateKey         : "",
     sslPublicCert         : "",
     sslVerifyCertificates : false,
+    trustProxy            : false,
+    secureCookies         : false,
     ...serverConfig
   };
   
@@ -69,6 +71,8 @@ module.exports = async function createServer(options) {
     sslPrivateKey, 
     sslPublicCert, 
     sslVerifyCertificates, 
+    trustProxy, 
+    secureCookies,
   } = config;
 
   const sessConfig = {
@@ -156,10 +160,15 @@ module.exports = async function createServer(options) {
     sessionOptions.store = await createSessionStore(session);
   }
     
-  if (isProduction) {
+  /* Since this is a library that can be used by anyone, 
+     allow the user determine these themselves.
+  if(isProduction) {
     app.set("trust proxy", 1); // incase we are behind a proxy (e.g. nginx)
     sessionOptions.cookie.secure = true; // serve secure cookies
-  }
+  }*/
+
+  app.set("trust proxy", trustProxy); // incase we are behind a proxy (e.g. nginx)
+  sessionOptions.cookie.secure = secureCookies; // serve secure cookies
 
   app.set("host", host);
   app.set("port", port);

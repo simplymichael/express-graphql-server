@@ -51,6 +51,8 @@ The `options` object passed to `createServer` has the following properties:
     - `sslPublicCert` {Buffer|String}: The public certificate (fullchain) to use for HTTPS.
       (Defaults to an empty string). Required if `serverConfig.https` is set to `true`.
     - `sslVerifyCertificates` {Boolean} (Default: `false`).
+    - `trustProxy` {Boolean} (Default: `false`): If we are behind a proxy, we can set this to `true`.
+    - `secureCookies` {Boolean} (Default: `false`): If `true`, cookies are served only over an HTTPS connection.
 - **sessionConfig {Object}:** For configuring [`express-session`][].
     - `name` {String}: Name of the session ID cookie, defaults to `connect.sid`.
     - `secret` {Array|String}: Secret for signing the session ID cookie.
@@ -140,6 +142,8 @@ const serverConfig = {
   sslPrivateKey         : "",
   sslPublicCert         : "",
   sslVerifyCertificates : false,
+  trustProxy            : false, 
+  secureCookies         : false,
 };
 
 const sessionConfig = {
